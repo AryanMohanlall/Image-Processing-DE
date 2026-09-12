@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Generated results -- reproducible from run_all.py.
+# Tables and figures ARE tracked: the report depends on them.
+results/raw/
+results/segmented/
+
+# LaTeX build artefacts
+report/*.aux
+report/*.log
+report/*.out
+report/*.bbl
+report/*.blg
+report/*.synctex.gz
+
+# OS
+.DS_Store
+Thumbs.db
