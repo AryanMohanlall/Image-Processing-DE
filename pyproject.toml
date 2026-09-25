@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cos791-multilevel-thresholding"
+version = "0.1.0"
+description = "Differential Evolution variants for multilevel image thresholding (COS791)"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+# `src` is the package itself (imported as `src.objectives`, `src.algorithms.*`),
+# not a src-layout root. Installing with `pip install -e .` puts the repository
+# root on sys.path so `experiments/` and `tests/` can import it without sys.path
+# manipulation.
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "experiments*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
