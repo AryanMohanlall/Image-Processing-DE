@@ -11,6 +11,8 @@ from collections.abc import Callable
 
 import numpy as np
 
+from src.segmentation import decode_thresholds
+
 
 # A supplied objective accepts an (n, K) array of threshold sets and returns
 # n fitness scores, one per candidate; larger scores are better.
@@ -47,25 +49,7 @@ def _validate_inputs(
 
 def _thresholds(population: np.ndarray, lower: int, upper: int) -> np.ndarray:
     """Convert real DE vectors to sorted, distinct integer thresholds."""
-    # DE searches with real-valued vectors internally. Decode before every
-    # evaluation and at return so the objective always receives K integers.
-    decoded = np.sort(np.rint(population).astype(np.int64), axis=1)
-    decoded = np.clip(decoded, lower, upper)
-    dimensions = decoded.shape[1]
-
-    # Sorting alone allows duplicates. These passes enforces 0 < t_1 < ... < t_K < L-1.
-    for column in range(dimensions):
-        minimum = lower + column
-        if column:
-            minimum = np.maximum(minimum, decoded[:, column - 1] + 1)
-        decoded[:, column] = np.maximum(decoded[:, column], minimum)
-    for column in range(dimensions - 1, -1, -1):
-        maximum = upper - (dimensions - 1 - column)
-        if column < dimensions - 1:
-            maximum = np.minimum(maximum, decoded[:, column + 1] - 1)
-        decoded[:, column] = np.minimum(decoded[:, column], maximum)
-
-    return decoded
+    return decode_thresholds(population, lower, upper)
 
 
 def _evaluate(
