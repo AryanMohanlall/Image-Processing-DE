@@ -8,3 +8,11 @@ seaborn>=0.13
 tqdm>=4.66
 PyYAML>=6.0
 joblib>=1.3
+pillow>=10.0
+
+# Testing. scikit-image is also used here as the SSIM oracle.
+pytest>=7.4
+
+# Notebooks. Paired to .py via jupytext so .ipynb need not be committed.
+jupyterlab>=4.0
+jupytext>=1.16
