@@ -2,9 +2,7 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
-from shade import SHADE
-
-from shade import SHADE
+from .shade import SHADE
  
 class LSHADE(SHADE):
     name = "L-SHADE"
