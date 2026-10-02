@@ -1,0 +1,1255 @@
+```latex
+\documentclass[review]{elsarticle}
+
+\graphicspath{{./figures/}}
+
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{verbatim}
+\usepackage{apalike}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{subcaption}
+
+\restylefloat{figure}
+\floatstyle{plaintop}
+\restylefloat{table}
+
+\journal{Expert Systems with Applications}
+
+%% ESWA APA referencing style
+\bibliographystyle{model5-names}
+\biboptions{authoryear}
+
+\begin{document}
+
+\begin{frontmatter}
+
+% =========================================================
+% TITLE PAGE
+% =========================================================
+
+\begin{titlepage}
+\begin{center}
+
+\vspace*{1cm}
+
+\textbf{\large COS 791 Image Analysis and Understanding: Multilevel Thresholding}
+
+\vspace{1.5cm}
+
+% Replace author details with your actual group members.
+Aryan Mohanlall$^{a}$ (u23565536@tuks.co.za),
+Second Author$^{a}$ (second.author@mail.com),
+Third Author$^{a}$ (third.author@mail.com),
+Fourth Author$^{a}$ (fourth.author@mail.com) \\
+
+\vspace{0.5cm}
+
+\begin{flushleft}
+\small
+$^a$ Department of Computer Science, University of Pretoria,
+Pretoria, Gauteng, South Africa
+
+\vspace{1cm}
+
+\textbf{Corresponding author:} Aryan Mohanlall \\
+Department of Computer Science, University of Pretoria \\
+Pretoria, Gauteng, South Africa \\
+Email: u23565536@tuks.co.za
+
+\end{flushleft}
+
+\end{center}
+\end{titlepage}
+
+
+% =========================================================
+% ARTICLE INFORMATION
+% =========================================================
+
+\title{Differential Evolution for Multilevel Image Thresholding Using Otsu, Kapur and Tsallis Objective Functions}
+
+\author[label1]{Aryan Mohanlall \corref{cor1}}
+\ead{u23565536@tuks.co.za}
+
+\author[label1]{Second Author}
+\ead{second.author@mail.com}
+
+\author[label1]{Third Author}
+\ead{third.author@mail.com}
+
+\author[label1]{Fourth Author}
+\ead{fourth.author@mail.com}
+
+\cortext[cor1]{Corresponding author.}
+
+\address[label1]
+{Department of Computer Science, University of Pretoria,
+Pretoria, Gauteng, South Africa}
+
+
+% =========================================================
+% ABSTRACT
+% =========================================================
+
+\begin{abstract}
+
+Multilevel image thresholding is an unsupervised image segmentation
+technique in which multiple intensity thresholds are selected to divide
+an image into homogeneous regions. As the number of thresholds increases,
+exhaustive threshold optimisation becomes computationally expensive,
+motivating the use of population-based optimisation algorithms.
+
+This study investigates the application of five Differential Evolution
+(DE) variants---Standard DE, JADE, SHADE, L-SHADE, and Late Acceptance
+Differential Evolution (LADE)---to multilevel image thresholding.
+Three optimisation objectives are considered: Otsu's between-class
+variance, Kapur's entropy, and Tsallis non-extensive entropy.
+
+The algorithms are evaluated at threshold levels
+$K \in \{3,5,7,9,11,12\}$ using standard BSD500 images and CHAOS
+magnetic resonance imaging (MRI) scans. Performance is evaluated using
+image reconstruction quality, segmentation quality, convergence
+behaviour, statistical significance, and computational scalability.
+
+% ---------------------------------------------------------
+% COMPLETE AFTER EXPERIMENTS:
+% Add 2--4 sentences summarising your most important numerical results.
+%
+% Example structure:
+%
+% Results indicate that [algorithm] achieved the highest average
+% [metric] for [dataset/objective/K], while [algorithm] demonstrated
+% [convergence/scalability observation].
+%
+% Statistical analysis showed ...
+% ---------------------------------------------------------
+
+The findings provide an empirical comparison of adaptive and
+non-adaptive Differential Evolution approaches for increasingly
+high-dimensional multilevel threshold selection.
+
+\end{abstract}
+
+
+\begin{keyword}
+Multilevel thresholding
+\sep Differential Evolution
+\sep JADE
+\sep SHADE
+\sep L-SHADE
+\sep Late Acceptance
+\sep Otsu
+\sep Kapur entropy
+\sep Tsallis entropy
+\sep Image segmentation
+\end{keyword}
+
+\end{frontmatter}
+
+
+% =========================================================
+% 1. INTRODUCTION
+% =========================================================
+
+\section{Introduction}
+\label{sec:introduction}
+
+Image segmentation is the process of partitioning an image into
+meaningful regions and constitutes an important preprocessing step in
+many computer vision and medical image analysis applications.
+
+Thresholding represents one of the simplest forms of image segmentation.
+In binary thresholding, a single threshold separates pixels into two
+classes. Multilevel thresholding generalises this concept by introducing
+multiple thresholds, allowing an image to be partitioned into several
+intensity regions.
+
+For an image containing $L$ possible grey levels, selecting an optimal
+combination of $K$ thresholds becomes increasingly computationally
+expensive as $K$ increases. Consequently, exhaustive search becomes
+impractical for high-dimensional multilevel thresholding problems.
+Metaheuristic optimisation techniques provide an alternative mechanism
+for searching this threshold space.
+
+Differential Evolution (DE) is a population-based evolutionary
+optimisation algorithm based on mutation, crossover, and selection.
+Several adaptive DE variants have subsequently been developed to improve
+parameter adaptation, convergence behaviour, population diversity, and
+computational efficiency.
+
+This study compares five DE-based optimisation algorithms for multilevel
+image thresholding:
+
+\begin{enumerate}
+    \item Standard Differential Evolution (DE/rand/1/bin);
+    \item JADE;
+    \item SHADE;
+    \item L-SHADE; and
+    \item Late Acceptance Differential Evolution (LADE).
+\end{enumerate}
+
+The algorithms are used to optimise three thresholding criteria:
+Otsu's between-class variance, Kapur's information entropy, and
+Tsallis non-extensive entropy.
+
+The experiments are conducted in two phases. The first evaluates
+algorithm behaviour on standard BSD500 benchmark images, while the
+second investigates performance on CHAOS MRI medical images.
+
+The main objectives of this study are therefore to:
+
+\begin{itemize}
+    \item implement and compare five Differential Evolution variants;
+    \item evaluate Otsu, Kapur, and Tsallis optimisation objectives;
+    \item investigate performance as the number of thresholds increases;
+    \item evaluate image reconstruction and segmentation quality;
+    \item compare convergence behaviour between algorithms;
+    \item evaluate computational scalability with increasing $K$; and
+    \item determine whether observed algorithmic differences are
+          statistically significant.
+\end{itemize}
+
+
+% =========================================================
+% 2. BACKGROUND AND RELATED WORK
+% =========================================================
+
+\section{Background and Related Work}
+\label{sec:background}
+
+% This section is where most of your literature citations should go.
+
+\subsection{Multilevel Image Thresholding}
+
+Consider a grey-scale image $I$ of size $M \times N$ with
+$L$ possible intensity levels
+
+\begin{equation}
+\{0,1,\ldots,L-1\}.
+\end{equation}
+
+The normalised probability of intensity level $i$ is
+
+\begin{equation}
+p_i =
+\frac{h(i)}{M N},
+\end{equation}
+
+where $h(i)$ represents the number of pixels with intensity $i$.
+
+For $K$ thresholds,
+
+\begin{equation}
+\mathbf{t} =
+[t_1,t_2,\ldots,t_K],
+\end{equation}
+
+the thresholds must satisfy
+
+\begin{equation}
+0 < t_1 < t_2 < \cdots < t_K < L-1.
+\end{equation}
+
+These thresholds partition the image into $K+1$ intensity classes,
+
+\begin{equation}
+C_0,C_1,\ldots,C_K.
+\end{equation}
+
+
+\subsection{Otsu's Between-Class Variance}
+\label{sec:otsu}
+
+% Explain Otsu based on the literature.
+% Add the exact equations used by your implementation.
+%
+% Explain:
+% - class probabilities
+% - class means
+% - global mean
+% - between-class variance
+% - maximisation objective
+
+Otsu's method selects thresholds by maximising the between-class
+variance of the resulting intensity classes.
+
+% TODO: Insert complete Otsu multilevel formulation and citation.
+
+
+\subsection{Kapur's Information Entropy}
+\label{sec:kapur}
+
+Kapur's method formulates threshold selection as an entropy maximisation
+problem.
+
+% TODO:
+% - Define entropy for each intensity class.
+% - Define total entropy.
+% - Explain why larger entropy is preferred.
+% - Cite original/relevant literature.
+
+
+\subsection{Tsallis Non-Extensive Entropy}
+\label{sec:tsallis}
+
+Tsallis entropy generalises conventional information entropy through
+the introduction of the non-extensivity parameter $q$.
+
+% TODO:
+% Insert actual equation used by your implementation.
+%
+% Explicitly explain:
+% q = 1 relationship to conventional entropy
+% selected q value(s), e.g. q = 0.8
+% why q changes the optimisation landscape
+
+
+\subsection{Differential Evolution}
+\label{sec:de_background}
+
+Differential Evolution is a stochastic population-based optimisation
+algorithm operating through mutation, crossover, and selection.
+
+% Explain generic DE before discussing variants.
+
+\subsubsection{Mutation}
+
+For the DE/rand/1 strategy,
+
+\begin{equation}
+\mathbf{v}_{i}
+=
+\mathbf{x}_{r_1}
++
+F
+\left(
+\mathbf{x}_{r_2}
+-
+\mathbf{x}_{r_3}
+\right),
+\end{equation}
+
+where $r_1$, $r_2$, and $r_3$ are mutually distinct randomly selected
+population indices and $F$ is the differential weight.
+
+
+\subsubsection{Binomial Crossover}
+
+The trial vector is generated according to
+
+\begin{equation}
+u_{i,j}
+=
+\begin{cases}
+v_{i,j},
+& \text{if } rand_j \leq CR
+\text{ or } j=j_{\mathrm{rand}}, \\
+
+x_{i,j},
+& \text{otherwise}.
+\end{cases}
+\end{equation}
+
+
+\subsubsection{Selection}
+
+For a maximisation problem,
+
+\begin{equation}
+\mathbf{x}_{i}^{(g+1)}
+=
+\begin{cases}
+\mathbf{u}_{i},
+& f(\mathbf{u}_{i}) \geq f(\mathbf{x}_{i}),\\
+
+\mathbf{x}_{i},
+& \text{otherwise}.
+\end{cases}
+\end{equation}
+
+
+% =========================================================
+% 3. PROPOSED / IMPLEMENTED ALGORITHMS
+% =========================================================
+
+\section{Differential Evolution Algorithms}
+\label{sec:algorithms}
+
+
+\subsection{Standard Differential Evolution}
+
+The baseline algorithm uses the DE/rand/1/bin strategy.
+
+% TODO:
+% Specify:
+% - population size
+% - F
+% - CR
+% - boundary handling
+% - integer threshold conversion
+% - duplicate threshold handling
+% - sorting of thresholds
+
+
+\subsection{JADE}
+
+JADE extends conventional DE through adaptive control parameters and
+the current-to-$p$best mutation strategy.
+
+% TODO:
+% Explain:
+% - DE/current-to-pbest/1
+% - p-best selection
+% - adaptive F
+% - adaptive CR
+% - external archive if enabled
+% - parameter values
+
+
+\subsection{SHADE}
+
+SHADE uses success-history based adaptation to maintain historical
+memories of successful $F$ and $CR$ parameter values.
+
+% TODO:
+% Explain:
+% - memory M_F
+% - memory M_CR
+% - success history
+% - sampling F and CR
+% - memory update mechanism
+
+
+\subsection{L-SHADE}
+
+L-SHADE extends SHADE through Linear Population Size Reduction (LPSR).
+
+% TODO:
+% Explain:
+% - how population size decreases
+% - initial population size
+% - minimum population size
+% - relationship to consumed FEs
+
+
+\subsection{Late Acceptance Differential Evolution}
+
+LADE integrates a Late Acceptance mechanism into Differential Evolution.
+
+% TODO:
+% This section MUST match your actual implementation.
+%
+% Explain:
+% - late acceptance history/list
+% - acceptance condition
+% - history length
+% - how the mechanism changes ordinary DE selection
+% - mutation/crossover strategy used
+
+
+% =========================================================
+% 4. METHODOLOGY
+% =========================================================
+
+\section{Methodology}
+\label{sec:methodology}
+
+
+\subsection{Threshold Representation}
+
+Each candidate solution consists of $K$ threshold values:
+
+\begin{equation}
+\mathbf{x}_i =
+[t_1,t_2,\ldots,t_K].
+\end{equation}
+
+Since pixel intensities are discrete, candidate threshold values produced
+by Differential Evolution must ultimately be mapped to valid integer
+intensities.
+
+% TODO:
+% Explain precisely how your code:
+% - rounds/clips values
+% - sorts thresholds
+% - handles duplicates
+% - guarantees 0 < t1 < ... < tK < 255
+
+
+\subsection{Threshold Levels}
+
+The following numbers of thresholds are evaluated:
+
+\begin{equation}
+K \in \{3,5,7,9,11,12\}.
+\end{equation}
+
+
+\subsection{Datasets}
+
+
+\subsubsection{BSD500 Benchmark Dataset}
+
+The first experimental phase uses 10 standard test images from the
+BSD500 dataset.
+
+% TODO:
+% - identify the exact 10 images
+% - image dimensions if relevant
+% - grayscale conversion
+% - preprocessing performed
+% - why these images were selected
+
+
+\subsubsection{CHAOS MRI Dataset}
+
+The second experimental phase evaluates the optimisation algorithms on
+15 MRI scan images from the CHAOS dataset.
+
+% TODO:
+% - modality used
+% - exact images/slices
+% - preprocessing
+% - normalisation
+% - ground-truth masks
+% - GT mask matching procedure
+
+
+\subsection{Experimental Parameters}
+
+Table~\ref{tab:parameters} summarises the main experimental settings.
+
+\begin{table}[H]
+\caption{Experimental parameter settings.}
+\label{tab:parameters}
+\centering
+
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Setting} \\
+\midrule
+
+Algorithms &
+DE, JADE, SHADE, L-SHADE, LADE \\
+
+Objective functions &
+Otsu, Kapur, Tsallis \\
+
+Threshold levels &
+$3,5,7,9,11,12$ \\
+
+Independent runs &
+30 \\
+
+Maximum function evaluations &
+\textit{[Insert value]} \\
+
+Population size &
+\textit{[Insert value / algorithm-specific]} \\
+
+Tsallis $q$ &
+\textit{[Insert value, e.g. 0.8]} \\
+
+DE $F$ &
+\textit{[Insert value]} \\
+
+DE $CR$ &
+\textit{[Insert value]} \\
+
+JADE $p$ &
+\textit{[Insert value]} \\
+
+SHADE memory size &
+\textit{[Insert value]} \\
+
+LADE history length &
+\textit{[Insert value]} \\
+
+Independent random seeds &
+\textit{[Describe procedure]} \\
+
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+
+\subsection{Experimental Procedure}
+
+For every image, objective function, threshold level and optimisation
+algorithm, 30 independent optimisation runs are performed.
+
+Each algorithm receives the same maximum number of objective function
+evaluations to ensure that algorithms are compared under an equivalent
+computational optimisation budget.
+
+For each independent run, the following information is recorded:
+
+\begin{itemize}
+    \item best objective-function value;
+    \item optimal threshold vector;
+    \item PSNR;
+    \item SSIM;
+    \item uniformity;
+    \item execution time;
+    \item function evaluations;
+    \item convergence history;
+    \item Dice coefficient for CHAOS where applicable; and
+    \item Jaccard index for CHAOS where applicable.
+\end{itemize}
+
+
+% =========================================================
+% 5. EVALUATION METRICS
+% =========================================================
+
+\section{Evaluation Metrics}
+\label{sec:metrics}
+
+
+\subsection{Peak Signal-to-Noise Ratio}
+
+The Peak Signal-to-Noise Ratio (PSNR) is calculated from the mean
+squared error (MSE),
+
+\begin{equation}
+MSE =
+\frac{1}{MN}
+\sum_{i=1}^{M}
+\sum_{j=1}^{N}
+\left(
+I(i,j)-\hat{I}(i,j)
+\right)^2.
+\end{equation}
+
+PSNR is then defined as
+
+\begin{equation}
+PSNR =
+10\log_{10}
+\left(
+\frac{MAX_I^2}{MSE}
+\right).
+\end{equation}
+
+% Explain what higher/lower means.
+
+
+\subsection{Structural Similarity Index}
+
+The Structural Similarity Index (SSIM) measures structural similarity
+between the original image and its reconstructed or segmented
+representation.
+
+% TODO:
+% Add SSIM formulation or cite implementation.
+% Explain interpretation.
+
+
+\subsection{Feature Uniformity}
+
+% IMPORTANT:
+% Use the exact uniformity equation required by your implementation/
+% literature source.
+
+The uniformity metric measures the homogeneity of pixels contained
+within the regions produced by multilevel thresholding.
+
+% TODO: Insert equation.
+
+
+\subsection{Dice Similarity Coefficient}
+
+For the CHAOS experiment, the Dice coefficient is calculated as
+
+\begin{equation}
+Dice =
+\frac{2|A \cap B|}
+{|A|+|B|},
+\end{equation}
+
+where $A$ represents the predicted segmentation and $B$ represents the
+ground-truth mask.
+
+
+\subsection{Jaccard Index}
+
+The Jaccard index is
+
+\begin{equation}
+J(A,B)
+=
+\frac{|A\cap B|}
+{|A\cup B|}.
+\end{equation}
+
+
+\subsection{Execution Time}
+
+Execution time is measured to investigate the computational cost of
+each optimisation algorithm as dimensionality increases.
+
+% State:
+% - units
+% - timing function
+% - whether preprocessing is included
+% - machine specification
+
+
+% =========================================================
+% 6. EXPERIMENT 1 -- BSD500
+% =========================================================
+
+\section{Experiment 1: BSD500 Benchmark Images}
+\label{sec:experiment1}
+
+
+\subsection{Experimental Objective}
+
+The purpose of the first experiment is to validate the implementations
+on standard benchmark images and establish baseline optimisation and
+convergence behaviour.
+
+
+\subsection{Reconstruction Performance}
+
+% You will probably need several tables rather than one enormous table.
+
+\begin{table}[H]
+\caption{PSNR results on BSD500 expressed as mean $\pm$ standard
+deviation over 30 independent runs.}
+\label{tab:bsd_psnr}
+\centering
+
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm &
+$K=3$ &
+$K=5$ &
+$K=7$ &
+$K=9$ &
+$K=11$ &
+$K=12$ \\
+
+\midrule
+
+DE      & -- & -- & -- & -- & -- & -- \\
+JADE    & -- & -- & -- & -- & -- & -- \\
+SHADE   & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE    & -- & -- & -- & -- & -- & -- \\
+
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+
+% Repeat equivalent tables for:
+%
+% - SSIM
+% - Uniformity
+%
+% Potentially make separate tables for Otsu/Kapur/Tsallis,
+% otherwise the tables will become too wide.
+
+
+\subsection{Effect of Threshold Level}
+
+% Discuss:
+%
+% K=3 -> K=12
+%
+% Does quality improve?
+% Does improvement plateau?
+% Does variance increase?
+% Does optimisation become harder?
+%
+% Do NOT just repeat values from tables.
+% Explain trends.
+
+
+\subsection{Effect of Objective Function}
+
+% Compare:
+% Otsu vs Kapur vs Tsallis
+%
+% Questions:
+% - Which produces different segmentation behaviour?
+% - Does one consistently produce higher reconstruction metrics?
+% - Does performance depend on K?
+% - Does Tsallis q affect results?
+
+
+\subsection{Convergence Analysis}
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.85\textwidth]{bsd_convergence_k12.pdf}
+    \caption{Convergence behaviour of the five DE algorithms for
+    \textit{[image]}, \textit{[objective]}, and $K=12$.}
+    \label{fig:bsd_convergence}
+\end{figure}
+
+% Recommended plots:
+% x-axis = Function Evaluations
+% y-axis = Best Objective Value
+%
+% Prefer mean convergence over 30 runs with variability if possible.
+
+
+\subsection{Visual Segmentation Results}
+
+\begin{figure}[H]
+\centering
+
+% Example layout once figures exist:
+%
+% \begin{subfigure}{0.30\textwidth}
+% \includegraphics[width=\linewidth]{original.png}
+% \caption{Original}
+% \end{subfigure}
+%
+% \begin{subfigure}{0.30\textwidth}
+% \includegraphics[width=\linewidth]{de_segmented.png}
+% \caption{DE}
+% \end{subfigure}
+%
+% \begin{subfigure}{0.30\textwidth}
+% \includegraphics[width=\linewidth]{lshade_segmented.png}
+% \caption{L-SHADE}
+% \end{subfigure}
+
+\caption{Example BSD500 image and corresponding multilevel
+segmentation results.}
+\label{fig:bsd_segmentation}
+
+\end{figure}
+
+
+\subsection{Discussion of Experiment 1}
+
+% This subsection should answer:
+%
+% 1. Which behavioural differences were observed?
+% 2. How did increasing K affect performance?
+% 3. How did objective function choice affect segmentation?
+% 4. Which algorithms converged faster/slower?
+% 5. Was variability between the 30 runs substantial?
+% 6. What does Experiment 1 tell you before moving to MRI data?
+
+
+% =========================================================
+% 7. EXPERIMENT 2 -- CHAOS MRI
+% =========================================================
+
+\section{Experiment 2: CHAOS MRI Images}
+\label{sec:experiment2}
+
+
+\subsection{Experimental Objective}
+
+The second experiment assesses the algorithms on medical MRI images,
+with particular emphasis on robustness, segmentation quality, and
+stability under increasing threshold dimensionality.
+
+
+\subsection{Ground-Truth Mask Matching}
+
+% IMPORTANT because the marking rubric explicitly mentions this.
+%
+% Explain precisely:
+% - CHAOS ground truth representation
+% - which segmented threshold class corresponds to target anatomy
+% - how the class is selected/matched to GT
+% - whether this matching is automatic
+% - whether Dice/Jaccard is calculated per image/run
+
+
+\subsection{Reconstruction Metrics}
+
+\begin{table}[H]
+\caption{PSNR on CHAOS MRI images expressed as mean $\pm$ standard
+deviation over 30 independent runs.}
+\label{tab:chaos_psnr}
+\centering
+
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm &
+$K=3$ &
+$K=5$ &
+$K=7$ &
+$K=9$ &
+$K=11$ &
+$K=12$ \\
+
+\midrule
+
+DE      & -- & -- & -- & -- & -- & -- \\
+JADE    & -- & -- & -- & -- & -- & -- \\
+SHADE   & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE    & -- & -- & -- & -- & -- & -- \\
+
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+
+\subsection{Ground-Truth Segmentation Performance}
+
+\begin{table}[H]
+\caption{Dice coefficient on CHAOS MRI images expressed as
+mean $\pm$ standard deviation.}
+\label{tab:chaos_dice}
+\centering
+
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm &
+$K=3$ &
+$K=5$ &
+$K=7$ &
+$K=9$ &
+$K=11$ &
+$K=12$ \\
+
+\midrule
+
+DE      & -- & -- & -- & -- & -- & -- \\
+JADE    & -- & -- & -- & -- & -- & -- \\
+SHADE   & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE    & -- & -- & -- & -- & -- & -- \\
+
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+
+% Add equivalent Jaccard table.
+
+
+\subsection{Visual MRI Segmentation Results}
+
+\begin{figure}[H]
+    \centering
+
+    % Add:
+    % Original MRI
+    % Ground truth
+    % DE segmentation
+    % JADE segmentation
+    % SHADE segmentation
+    % L-SHADE segmentation
+    % LADE segmentation
+
+    \caption{Example CHAOS MRI slice, ground-truth mask and
+    segmentation outputs produced by the evaluated algorithms.}
+    \label{fig:chaos_visual}
+\end{figure}
+
+
+\subsection{Discussion of Experiment 2}
+
+% Address:
+%
+% - reconstruction metric behaviour
+% - Dice/Jaccard behaviour
+% - differences from BSD500
+% - medical-image characteristics
+% - stability
+% - effect of K
+% - effect of objective
+% - Tsallis q
+
+
+% =========================================================
+% 8. STATISTICAL ANALYSIS
+% =========================================================
+
+\section{Statistical Analysis}
+\label{sec:statistics}
+
+Because stochastic evolutionary algorithms may produce different
+solutions across independent runs, statistical tests are used to
+determine whether observed performance differences are statistically
+significant.
+
+A significance level of
+
+\begin{equation}
+\alpha = 0.05
+\end{equation}
+
+is used.
+
+
+\subsection{Wilcoxon Signed-Rank Test}
+
+% If using Wilcoxon:
+%
+% Clearly state:
+% - paired observations being compared
+% - H0
+% - H1
+% - significance level
+% - multiple-comparison handling if used
+%
+% DO NOT just report p-values without interpretation.
+
+
+\subsection{Friedman Test}
+
+% If using Friedman:
+%
+% Explain:
+% - datasets/tasks as blocks
+% - algorithms as treatments
+% - H0: equivalent algorithm ranks
+% - significance decision
+% - post-hoc testing if performed
+
+
+\begin{table}[H]
+\caption{Statistical comparison of optimisation algorithms.}
+\label{tab:stats}
+\centering
+
+\begin{tabular}{llll}
+\toprule
+Comparison & Metric & $p$-value & Significant? \\
+\midrule
+
+DE vs JADE      & -- & -- & -- \\
+DE vs SHADE     & -- & -- & -- \\
+DE vs L-SHADE   & -- & -- & -- \\
+DE vs LADE      & -- & -- & -- \\
+
+\bottomrule
+\end{tabular}
+
+\end{table}
+
+
+% =========================================================
+% 9. SCALABILITY AND COMPUTATIONAL ANALYSIS
+% =========================================================
+
+\section{Computational Scalability Analysis}
+\label{sec:scalability}
+
+
+\subsection{Execution Time versus Number of Thresholds}
+
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{runtime_vs_k.pdf}
+    \caption{Mean execution time as a function of threshold level $K$.}
+    \label{fig:runtime}
+\end{figure}
+
+% Discuss:
+%
+% Does runtime increase with K?
+% Linear/non-linear?
+% Algorithm differences?
+% Impact of adaptation/archive/history?
+% Does L-SHADE's population reduction affect runtime?
+
+
+\subsection{Convergence Rate}
+
+% Compare the number of FEs required to reach a given quality,
+% or directly compare convergence curves.
+
+
+\subsection{Impact of Increasing Dimensionality}
+
+% Important discussion:
+%
+% Search vector dimension == K.
+%
+% K=3 => 3-dimensional optimisation problem
+% K=12 => 12-dimensional optimisation problem
+%
+% Explain:
+% - search-space growth
+% - convergence difficulty
+% - variability
+% - population diversity
+% - premature convergence if observed
+
+
+% =========================================================
+% 10. DISCUSSION
+% =========================================================
+
+\section{Discussion}
+\label{sec:discussion}
+
+% This is one of the most important report sections.
+%
+% Don't simply repeat Results.
+%
+% Suggested structure:
+
+
+\subsection{Comparison of Differential Evolution Variants}
+
+% Compare the mechanisms behind observed behaviour.
+%
+% Standard DE:
+% fixed F/CR, baseline
+%
+% JADE:
+% parameter adaptation + p-best
+%
+% SHADE:
+% successful parameter history
+%
+% L-SHADE:
+% success-history + population reduction
+%
+% LADE:
+% late acceptance behaviour
+
+
+\subsection{Impact of Objective Function}
+
+% Compare Otsu/Kapur/Tsallis across both datasets.
+
+
+\subsection{Impact of Tsallis Non-Extensivity Parameter}
+
+% Assignment specifically asks for critical analysis of q.
+%
+% Discuss what q does and what you observed empirically.
+
+
+\subsection{BSD500 versus CHAOS MRI}
+
+% Compare:
+% - generic image segmentation
+% - medical image segmentation
+% - intensity distributions
+% - stability
+% - GT-based metrics
+
+
+\subsection{Algorithm Robustness}
+
+% Use standard deviation, statistical testing, and convergence
+% evidence rather than only best-run performance.
+
+
+\subsection{Limitations}
+
+Possible limitations include:
+
+\begin{itemize}
+    \item evaluation on a limited number of images;
+    \item dependence on selected DE parameter settings;
+    \item use of a fixed Tsallis $q$ value, if applicable;
+    \item stochastic variability between runs;
+    \item computational cost associated with repeated optimisation; and
+    \item limitations of intensity-only thresholding for complex
+          anatomical structures.
+\end{itemize}
+
+
+% =========================================================
+% 11. CONCLUSION
+% =========================================================
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This study evaluated five Differential Evolution algorithms for
+multilevel image thresholding using Otsu, Kapur, and Tsallis objective
+functions across six threshold dimensions.
+
+% AFTER RESULTS, answer:
+%
+% - What did you learn?
+% - How did adaptive algorithms behave relative to baseline DE?
+% - What happened as K increased?
+% - What happened on BSD500 vs CHAOS?
+% - What was the impact of objective-function selection?
+% - What did statistical analysis establish?
+%
+% Avoid introducing new results here.
+
+
+% =========================================================
+% OPTIONAL FUTURE WORK
+% =========================================================
+
+\section{Future Work}
+
+Possible extensions include evaluation on larger medical imaging
+datasets, adaptive optimisation of the Tsallis $q$ parameter, alternative
+population adaptation strategies, and hybridisation with other
+metaheuristic optimisation techniques.
+
+
+% =========================================================
+% AUTHOR CONTRIBUTIONS
+% =========================================================
+
+\section*{CRediT authorship contribution statement}
+
+\textbf{Aryan Mohanlall:}
+% Replace with actual responsibilities.
+Standard DE and Late Acceptance DE implementation.
+
+\textbf{Second Author:}
+% Insert actual contributions.
+
+\textbf{Third Author:}
+% Insert actual contributions.
+
+\textbf{Fourth Author:}
+% Insert actual contributions.
+
+
+% =========================================================
+% DECLARATIONS
+% =========================================================
+
+\section*{Declaration of Competing Interest}
+
+The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to
+influence the work reported in this paper.
+
+
+\section*{Acknowledgements}
+
+% Add acknowledgements only if appropriate.
+
+
+\section*{Data availability}
+
+The source code, experimental configurations, and generated results
+used in this study are provided in the accompanying assignment
+submission repository.
+
+% Replace with repository URL if required.
+
+
+% =========================================================
+% REFERENCES
+% =========================================================
+
+\bibliography{sample}
+
+\end{document}
+```
