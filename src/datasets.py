@@ -19,41 +19,20 @@ DATASETS: tuple[str, ...] = (BSD500, CHAOS)
 # "BDS500" is the spelling the files ship with.
 BSD500_DIR = "BDS500"
 CHAOS_DIR = "CHAOS"
-CHAOS_GT_DIR = "Ground"
-CHAOS_GT_FALLBACK_DIR = DATA_ROOT / "CHAOS_GT"
 
 RGBA_CHANNELS = 4
 OPAQUE = 255
 
 LUMA_BT601 = (0.299, 0.587, 0.114)
 
-# Matched by range, not equality: export interpolation shifts labels a level or two
-CHAOS_ORGANS: dict[str, tuple[int, int]] = {
-    "liver": (55, 70),
-    "right_kidney": (110, 135),
-    "left_kidney": (175, 200),
-    "spleen": (240, 255),
-}
-
-
 @dataclass(frozen=True)
 class ImageRecord:
     image_id: str
     dataset: str
     path: Path
-    gt_path: Path | None = None
-
-    @property
-    def has_ground_truth(self) -> bool:
-        return self.gt_path is not None
 
     def load(self) -> np.ndarray:
         return load_grayscale(self.path)
-
-    def load_ground_truth(self) -> dict[str, np.ndarray] | None:
-        if self.gt_path is None:
-            return None
-        return load_chaos_masks(self.gt_path)
 
 
 def to_grayscale(pixels: np.ndarray) -> np.ndarray:
@@ -86,29 +65,12 @@ def load_grayscale(path: str | Path) -> np.ndarray:
     return grayscale
 
 
-def load_chaos_masks(path: str | Path) -> dict[str, np.ndarray]:
-    """Organs absent from the slice are omitted, metrics never average them in"""
-    labels = load_grayscale(path)
-    masks = {
-        organ: (labels >= low) & (labels <= high)
-        for organ, (low, high) in CHAOS_ORGANS.items()
-    }
-    return {organ: mask for organ, mask in masks.items() if mask.any()}
-
-
-def load_dataset(
-    name: str,
-    data_root: Path | None = None,
-    gt_dir: Path | None = None,
-) -> list[ImageRecord]:
+def load_dataset(name: str, data_root: Path | None = None) -> list[ImageRecord]:
     root = data_root or DATA_ROOT
     paths = _image_paths(name, root)
     if not paths:
         raise FileNotFoundError(f"no images found for dataset {name!r} under {root}")
-    return [
-        ImageRecord(path.stem, name, path, _ground_truth_path(name, path, gt_dir))
-        for path in paths
-    ]
+    return [ImageRecord(path.stem, name, path) for path in paths]
 
 
 def _image_paths(name: str, root: Path) -> list[Path]:
@@ -124,39 +86,9 @@ def _bsd500_paths(directory: Path) -> list[Path]:
     return sorted(images, key=lambda p: int(p.stem.removeprefix("img")))
 
 
-def _ground_truth_path(
-    dataset: str, image_path: Path, gt_dir: Path | None
-) -> Path | None:
 
-    if dataset != CHAOS:
-        return None
-    for directory in _mask_directories(image_path, gt_dir):
-        candidate = directory / image_path.name
-
-        if candidate.is_file():
-            return candidate
-    return None
-
-
-def _mask_directories(image_path: Path, gt_dir: Path | None) -> list[Path]:
-    if gt_dir is not None:
-        return [gt_dir]
-        
-    return [
-        image_path.parent / CHAOS_GT_DIR,
-        image_path.parent.parent / CHAOS_GT_DIR,
-        CHAOS_GT_FALLBACK_DIR,
-    ]
-
-
-def load_all(
-    data_root: Path | None = None, gt_dir: Path | None = None
-) -> list[ImageRecord]:
-    return [
-        record
-        for name in DATASETS
-        for record in load_dataset(name, data_root, gt_dir)
-    ]
+def load_all(data_root: Path | None = None) -> list[ImageRecord]:
+    return [record for name in DATASETS for record in load_dataset(name, data_root)]
 
 
 def manifest(records: list[ImageRecord] | None = None) -> pd.DataFrame:
@@ -175,8 +107,6 @@ def _manifest_row(record: ImageRecord) -> dict[str, object]:
         "n_pixels": image.size,
         "min_level": int(image.min()),
         "max_level": int(image.max()),
-        "has_ground_truth": record.has_ground_truth,
-        "gt_path": _relative_to_root(record.gt_path) if record.gt_path else None,
     }
 
 

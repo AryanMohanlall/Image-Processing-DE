@@ -18,8 +18,7 @@ HIGHER_IS_BETTER = {
     "psnr": True,
     "ssim": True,
     "uniformity": True,
-    "jaccard": True,
-    "dice": True,
+    "class_separability": True,
     "gap_to_optimum": False,
     "wall_time_s": False,
 }

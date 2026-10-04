@@ -17,7 +17,7 @@ from src.stats import summary_table, to_latex
 DEFAULT_JOBS = -2
 
 RECONSTRUCTION_METRICS = ("psnr", "ssim", "uniformity")
-OVERLAP_METRICS = ("jaccard", "dice")
+SEPARABILITY_METRICS = ("class_separability",)
 
 SMOKE_K_VALUES = (3,)
 SMOKE_RUNS = 2

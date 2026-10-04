@@ -172,7 +172,6 @@ def _write_atomic(path: Path, write: Callable[[Path], None]) -> None:
 class CellInputs:
     image: np.ndarray
     stats: ImageStats
-    masks: dict[str, np.ndarray] | None
     reference: float | None
 
     @classmethod
@@ -182,7 +181,6 @@ class CellInputs:
         return cls(
             image=image,
             stats=stats,
-            masks=record.load_ground_truth(),
             reference=_reference_optimum(spec, stats),
         )
 
@@ -267,7 +265,7 @@ def _score(
     inputs: CellInputs, counter: CountingObjective, elapsed: float
 ) -> dict[str, object]:
     thresholds = decode_thresholds(counter.best_thresholds)
-    scores = metrics.evaluate(inputs.image, thresholds, inputs.stats, inputs.masks)
+    scores = metrics.evaluate(inputs.image, thresholds, inputs.stats)
     return {
         "best_fitness": counter.best_fitness,
         "thresholds": ",".join(str(int(t)) for t in thresholds),
@@ -277,8 +275,7 @@ def _score(
         "psnr": scores["psnr"],
         "ssim": scores["ssim"],
         "uniformity": scores["uniformity"],
-        "jaccard": scores["jaccard"],
-        "dice": scores["dice"],
+        "class_separability": scores["class_separability"],
     }
 
 
