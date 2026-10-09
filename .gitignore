@@ -19,6 +19,9 @@ report/*.bbl
 report/*.blg
 report/*.synctex.gz
 
+tests/*.png
+tests/*.py
+
 # OS
 .DS_Store
 Thumbs.db
