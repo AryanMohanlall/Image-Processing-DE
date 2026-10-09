@@ -1,12 +1,8 @@
-"""JADE adapted to the repository's thresholding interface.
+"""This module implment JADE adapted to the repository's thresholding interface.
 
-The paper logic is preserved: current-to-pbest/1 mutation, optional archive,
-binomial crossover, and adaptive F/CR updates. The external interface matches
-src.experiment's expected optimizer contract:
+Based on the logic in the JADE paper, these are implmented: current-to-pbest/1 mutation, optional archive,
+binomial crossover, and adaptive F/CR updates.
 
-    objective: accepts (n, K) threshold candidates and returns one score per row
-    optimize(objective, dimensions, max_evaluations, lower_bound, upper_bound, seed)
-    -> (best_thresholds, best_fitness, history_fes, history_best)
 """
 
 from __future__ import annotations
