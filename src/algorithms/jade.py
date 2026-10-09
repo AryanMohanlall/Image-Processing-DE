@@ -1,4 +1,4 @@
-"""This module implment JADE adapted to the repository's thresholding interface.
+"""This module implment JADE.
 
 Based on the logic in the JADE paper, these are implmented: current-to-pbest/1 mutation, optional archive,
 binomial crossover, and adaptive F/CR updates.
