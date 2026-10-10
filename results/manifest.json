@@ -1,0 +1,15 @@
+{
+  "finished_utc": "2026-10-09T17:09:23.213900+00:00",
+  "elapsed_seconds": 1.7,
+  "python": "3.14.3",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "algorithms": [
+    "standard_de",
+    "jade",
+    "late_acceptance_de"
+  ],
+  "runs": 2,
+  "max_evaluations": 600,
+  "smoke": true,
+  "stats": false
+}

@@ -19,38 +19,75 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCES = {
     "standard_de": ROOT / "results/exp1_standardDE",
     "late_acceptance_de": ROOT / "results/exp1_late_acceptance_de",
+    "jade": ROOT / "results/exp1_jade",
 }
-LABELS = {"standard_de": "DE", "late_acceptance_de": "LADE"}
+LABELS = {"standard_de": "DE", "late_acceptance_de": "LADE", "jade": "JADE"}
 OBJECTIVES = ("otsu", "kapur", "tsallis")
 KS = (3, 5, 7, 9, 11, 12)
 METRICS = {"psnr": "PSNR (dB)", "ssim": "SSIM", "uniformity": "Uniformity"}
-COLOURS = {"standard_de": "#4C72B0", "late_acceptance_de": "#8172B3"}
+COLOURS = {"standard_de": "#4C72B0", "late_acceptance_de": "#8172B3","jade": "#55A868"}
 
 
 def load_results():
     frames = []
+    keys = ["image_id", "objective", "k"]
+
     for algorithm, root in SOURCES.items():
         paths = sorted((root / "raw").rglob("*.parquet"))
-        assert len(paths) == 180, (algorithm, "expected 180 result files")
-        frame = pd.concat([pd.read_parquet(p) for p in paths], ignore_index=True)
-        assert len(frame) == 5400 and frame.algorithm.eq(algorithm).all()
-        assert frame.dataset.eq("bsd500").all() and frame.status.eq("ok").all()
+        assert len(paths) == 180, (
+            algorithm, f"expected 180 result files, found {len(paths)}"
+        )
+
+        frame = pd.concat(
+            [pd.read_parquet(path) for path in paths],
+            ignore_index=True,
+        )
+
+        assert len(frame) == 5400, (
+            algorithm, f"expected 5400 runs, found {len(frame)}"
+        )
+        assert frame.algorithm.eq(algorithm).all()
+        assert frame.dataset.eq("bsd500").all()
+        assert frame.status.eq("ok").all()
         assert frame.contract_ok.all()
         assert frame.max_evaluations.eq(30000).all()
         assert frame.used_evaluations.eq(30000).all()
-        assert frame.loc[frame.objective.eq("tsallis"), "q"].eq(0.8).all()
-        keys = ["image_id", "objective", "k"]
+        assert frame.loc[
+            frame.objective.eq("tsallis"), "q"
+        ].eq(0.8).all()
+
         assert frame.groupby(keys).size().eq(30).all()
         assert not frame.duplicated(keys + ["run"]).any()
-        assert set(frame.image_id) == {f"img{i}" for i in range(1, 11)}
-        assert set(frame.objective) == set(OBJECTIVES) and set(frame.k) == set(KS)
+        assert set(frame.image_id) == {
+            f"img{i}" for i in range(1, 11)
+        }
+        assert set(frame.objective) == set(OBJECTIVES)
+        assert set(frame.k) == set(KS)
         assert set(frame.run) == set(range(30))
-        assert np.isfinite(frame[list(METRICS) + ["best_fitness", "wall_time_s"]]).all().all()
+
+        numeric_columns = list(METRICS) + [
+            "best_fitness", "wall_time_s"
+        ]
+        assert np.isfinite(
+            frame[numeric_columns].to_numpy()
+        ).all()
+
         frames.append(frame)
+
     frame = pd.concat(frames, ignore_index=True)
-    seeds = frame.pivot(index=["image_id", "objective", "k", "run"],
-                        columns="algorithm", values="seed")
-    assert seeds.standard_de.eq(seeds.late_acceptance_de).all()
+
+    seeds = frame.pivot(
+        index=keys + ["run"],
+        columns="algorithm",
+        values="seed",
+    )
+    assert seeds.notna().all().all(), "Missing paired run seeds"
+
+    for algorithm in SOURCES:
+        assert seeds[algorithm].eq(seeds["standard_de"]).all(), (
+            algorithm, "run seeds differ from Standard DE"
+        )
+
     return frame
 
 
@@ -108,7 +145,7 @@ def figures(frame):
 
     image = load_dataset("bsd500")[0].load()
     for objective in OBJECTIVES:
-        fig, axes = plt.subplots(2, 4, figsize=(9, 6))
+        fig, axes = plt.subplots(len(SOURCES),4,figsize=(9, 3 * len(SOURCES)),squeeze=False,)
         for row, algorithm in enumerate(SOURCES):
             axes[row, 0].imshow(image, cmap="gray", vmin=0, vmax=255)
             axes[row, 0].set_title(f"{LABELS[algorithm]}: original")
@@ -142,12 +179,12 @@ def section_tex(table, frame):
         return lookup.loc[(algorithm, objective, k), metric + "_mean"]
     text = [r"\section{Experiment 1: BSD500 Benchmark Images}", r"\label{sec:experiment1}",
             r"\subsection{Experimental Objective and Completed Runs}",
-            "This section reports the completed Standard DE (DE) and Late Acceptance DE (LADE) "
-            "experiments on the ten supplied BSD500 images. Results for JADE, SHADE and L-SHADE "
-            "are not included in this comparison. Each algorithm was evaluated with Otsu, Kapur "
+            "This section reports the completed Standard DE (DE), Late Acceptance DE (LADE) "
+            "and JADE experiments on the ten supplied BSD500 images. Results for SHADE "
+            "and L-SHADE are not included in this comparison. Each algorithm was evaluated with Otsu, Kapur "
             "and Tsallis ($q=0.8$) at $K\\in\\{3,5,7,9,11,12\\}$, using 30 runs per combination "
             "and a budget of 30,000 function evaluations, including initialisation. The saved "
-            "results contain 5,400 successful runs per algorithm (10,800 in total); every run "
+            f"results contain 5,400 successful runs per algorithm ({len(frame):,} in total); every run "
             "used the full budget and passed the recorded fitness-contract check.",
             r"\subsection{Reconstruction Performance}",
             "Tables below report the mean and sample standard deviation of PSNR, SSIM and "
@@ -163,7 +200,7 @@ def section_tex(table, frame):
         for metric in METRICS:
             text.append(table_tex(table, objective, metric))
     text += [r"\clearpage", r"\subsection{Effect of Threshold Level}",
-             "Mean PSNR and SSIM increase from $K=3$ to $K=12$ for both algorithms under "
+             "Mean PSNR and SSIM increase from $K=3$ to $K=12$ for for DE and LADE algorithms under "
              "all three objectives. More thresholds permit finer intensity reconstruction, "
              "although gains diminish at higher $K$. For DE with Otsu, mean PSNR increases "
              f"from {value('standard_de','otsu',3,'psnr'):.4f} to "
@@ -175,7 +212,7 @@ def section_tex(table, frame):
              "This metric includes an explicit factor of $K$, so improved PSNR does not guarantee "
              "a larger uniformity score.",
              r"\subsection{Effect of Objective Function}",
-             "Otsu gives the highest mean PSNR and uniformity for both algorithms at every "
+             "Otsu gives the highest mean PSNR and uniformity for for DE and LADE algorithms at every "
              "tested threshold count. Otsu also gives the highest mean SSIM at every "
              "tested threshold count. For DE at $K=12$, the mean PSNR values are "
              f"{value('standard_de','otsu',12,'psnr'):.4f}, "
@@ -202,7 +239,8 @@ def section_tex(table, frame):
         text += [r"\begin{figure}[htbp]", r"\centering",
                  f"\\includegraphics[width=0.9\\textwidth]{{exp1_segmentation_{objective}.png}}",
                  f"\\caption{{Original and segmented img1 under {objective.title()} at "
-                 "$K=3,7,12$. DE occupies the first row and LADE the second. Each solution "
+                 "$K=3,7,12$. DE occupies the first row, LADE the second . Each solution "
+                 "and JADE the third. Each solution "
                  "is selected by fitness closest to the median of its 30 runs (ties use "
                  "the lowest run index). Class intensities are spread evenly for display; "
                  "PSNR and SSIM are computed using class means instead.}",
@@ -221,7 +259,8 @@ def section_tex(table, frame):
              "The saved results do not record hardware or worker counts, so runtime differences "
              "cannot be attributed exclusively to algorithm design.",
              r"\subsection{Discussion of Experiment 1}",
-             "Neither algorithm consistently dominates the reconstruction metrics. DE has "
+             "Neither DE nor LADE consistently dominates the reconstruction metrics "
+             "in their pairwise comparison. DE has "
              "slightly higher mean Otsu PSNR from $K=7$ through $K=12$, whereas LADE has "
              "higher mean Kapur PSNR at $K=5,9,11,12$. At $K=12$, LADE exceeds DE's "
              "Kapur PSNR by "
@@ -256,8 +295,8 @@ def main():
     start = tex.index(r"\section{Experiment 1: BSD500 Benchmark Images}")
     end = tex.index(r"\section{Experiment 2: CHAOS MRI Images}")
     tex = tex[:start] + section_tex(pooled, frame) + tex[end:]
-    path.write_text(tex, encoding="utf-8")
-    print("Validated 10,800 runs; populated Experiment 1 in temp.tex.")
+    path.write_text(tex, encoding="utf-8") 
+    print(f"Validated {len(frame):,} runs; ""populated Experiment 1 in temp.tex.")
     print("Wrote five PNG figures at 300 DPI and pooled/per-image summary CSVs.")
 
 

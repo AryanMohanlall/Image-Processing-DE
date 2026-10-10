@@ -135,7 +135,12 @@ class JADE:
         history_best = [best_fitness]
 
         while evaluations < max_evaluations:
-            ranked = np.argsort(-fitness, kind="stable")
+            parents = population.copy()
+            parent_fitness = fitness.copy()
+            next_population = parents.copy()
+            next_fitness = parent_fitness.copy()
+
+            ranked = np.argsort(-parent_fitness, kind="stable")
             n_pbest = max(1, int(np.ceil(self.p * self.population_size)))
             successful_f: list[float] = []
             successful_cr: list[float] = []
@@ -155,48 +160,55 @@ class JADE:
                 while r1 == target:
                     r1 = int(rng.integers(self.population_size))
 
-                if self.use_archive and archive:
-                    donor_pool = np.concatenate(
-                        [population, np.asarray(archive, dtype=float)], axis=0
-                    )
-                    donor = donor_pool[int(rng.integers(donor_pool.shape[0]))]
+                archive_count = len(archive) if self.use_archive else 0
+                donor_index = int(rng.integers(self.population_size + archive_count))
+                while donor_index == target or donor_index == r1:
+                    donor_index = int(rng.integers(self.population_size + archive_count))
+
+                if self.use_archive and archive_count:
+                    if donor_index < self.population_size:
+                        donor = parents[donor_index]
+                    else:
+                        donor = np.asarray(archive[donor_index - self.population_size], dtype=float)
                 else:
-                    r2 = int(rng.integers(self.population_size))
-                    while r2 == target or r2 == r1:
-                        r2 = int(rng.integers(self.population_size))
-                    donor = population[r2]
+                    donor = parents[donor_index]
 
                 mutant = (
-                    population[target]
-                    + f * (population[pbest_index] - population[target])
-                    + f * (population[r1] - donor)
+                    parents[target]
+                    + f * (parents[pbest_index] - parents[target])
+                    + f * (parents[r1] - donor)
                 )
                 mutant = np.clip(mutant, lower_bound, upper_bound)
 
                 crossover = rng.random(dimensions) < cr
                 crossover[rng.integers(dimensions)] = True
-                trial = np.where(crossover, mutant, population[target])
+                trial = np.where(crossover, mutant, parents[target])
 
                 score = float(_evaluate(objective, trial[None, :], lower_bound, upper_bound)[0])
                 evaluations += 1
 
-                if score > fitness[target]:
+                if score > parent_fitness[target]:
                     if self.use_archive:
-                        archive.append(population[target].copy())
-                        if len(archive) > self.population_size:
-                            keep = rng.choice(len(archive), self.population_size, replace=False)
-                            archive = [archive[index] for index in keep]
-                    population[target] = trial
-                    fitness[target] = score
+                        archive.append(parents[target].copy())
+                    next_population[target] = trial
+                    next_fitness[target] = score
                     successful_f.append(f)
                     successful_cr.append(cr)
 
-                best_index = int(np.argmax(fitness))
-                if fitness[best_index] > best_fitness:
-                    best_fitness = float(fitness[best_index])
-                    best_vector = population[best_index].copy()
+                if score > best_fitness:
+                    best_fitness = score
+                    best_vector = trial.copy()
                 history_fes.append(evaluations)
                 history_best.append(best_fitness)
+
+            population = next_population
+            fitness = next_fitness
+
+            if self.use_archive and len(archive) > self.population_size:
+                keep = rng.choice(
+                    len(archive), self.population_size, replace=False
+                )
+                archive = [archive[index] for index in keep]
 
             if successful_f:
                 sf = np.asarray(successful_f, dtype=np.float64)

@@ -1,8 +1,8 @@
-```latex
 \documentclass[review]{elsarticle}
 
 \graphicspath{{./figures/}}
 
+\usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{verbatim}
@@ -19,9 +19,8 @@
 
 \journal{Expert Systems with Applications}
 
-%% ESWA APA referencing style
-\bibliographystyle{model5-names}
-\biboptions{authoryear}
+\bibliographystyle{ieeetr}
+\bibliography{references}
 
 \begin{document}
 
@@ -396,19 +395,33 @@ The baseline algorithm uses the DE/rand/1/bin strategy.
 
 
 \subsection{JADE}
+\label{sec:jade}
 
-JADE extends conventional DE through adaptive control parameters and
-the current-to-$p$best mutation strategy.
+JADE follows the adaptive DE/current-to-$p$best/1 mechanism introduced by Zhang and Sanderson \citep{zhang2009jade}. In the original JADE formulation, the mutant vector for target $\mathbf{x}_{i,g}$ is
+\begin{equation}
+\mathbf{v}_{i,g}
+=
+\mathbf{x}_{i,g}
++ F_i(\mathbf{x}_{pbest,g}-\mathbf{x}_{i,g})
++ F_i(\mathbf{x}_{r_1,g}-\mathbf{x}_{r_2,g}).
+\end{equation}
+For this project, the same current-to-$p$best/1 strategy is used, but the vectors are threshold candidates rather than unconstrained real-valued design variables. The index $pbest$ is sampled uniformly from the top $\lceil p N_P \rceil$ parent candidates, where $p=0.05$ and $N_P=50$ in the JADE runs. The index $r_1$ is selected from the current parent population, excluding the target. The second donor index $r_2$ is selected uniformly from the union of the parent population and the external archive, excluding the target and the $r_1$ population index. This distinction matters because the original JADE algorithm is adaptive and archive-based, whereas the project-specific threshold representation is handled separately by the shared segmentation decoder and clipping rules.
 
-% TODO:
-% Explain:
-% - DE/current-to-pbest/1
-% - p-best selection
-% - adaptive F
-% - adaptive CR
-% - external archive if enabled
-% - parameter values
+Within each generation, the parent population and the corresponding fitness values are frozen before mutation and trial evaluation. Accepted offspring are stored in a separate next-generation population and are committed only at the end of the generation; this also applies to the final partial generation when the evaluation budget is exhausted. The archive stores displaced parents immediately after a strict improvement, and, if the archive exceeds $N_P$ entries at generation end, it is randomly trimmed back to a maximum of $N_P$ solutions. This is consistent with the project implementation used here and differs from an in-place update strategy that would overwrite parents during the generation.
 
+Binomial crossover is then applied to each target vector with a mandatory mutant component, ensuring that at least one dimension is inherited from the mutant. The objective functions are maximised, so only strictly higher fitness values are accepted; equal or lower fitness values do not replace the parent. Control parameters are sampled as in JADE: $CR_i \sim \mathcal{N}(\mu_{CR}, 0.1)$, clipped to $[0,1]$, and $F_i \sim \mathcal{C}(\mu_F, 0.1)$ with non-positive or non-finite values resampled and values above one capped at one. The successful parameter sets update the adaptation means as
+\begin{align}
+\mu_{CR} &\leftarrow
+(1-c)\mu_{CR}+c\,\operatorname{mean}(S_{CR}),\\
+\mu_F &\leftarrow
+(1-c)\mu_F+
+ c\,\frac{\sum_{F\in S_F}F^2}{\sum_{F\in S_F}F},
+\end{align}
+where the second update is the Lehmer mean of successful mutation factors. If no successful trial is found in a generation, the means remain unchanged.
+
+After mutation and crossover, each real-valued threshold vector is transformed to an integer threshold set using the shared implementation in \texttt{src/segmentation.py}. The project decoder rounds to the nearest integer, clips every threshold into the valid range $[1,254]$, and then enforces a strictly increasing set of threshold values by pushing each component upward to at least the lower bound for that position and pushing it downward to respect the upper bound implied by later thresholds. This yields valid, ordered integer thresholds that conform to the project segmentation code and are not equivalent to unconstrained mutation in the original JADE paper. Mutants that fall outside the threshold bounds are clipped before decoding, and the final integer threshold vector is used in the objective evaluation.
+
+The FE budget follows the project implementation exactly: the initial population evaluation consumes $N_P$ evaluations, and every evaluated trial thereafter increments the objective budget. The optimiser stops once the budget is reached, including the final partial generation when a generation is terminated by the evaluation cap. The total experimental configuration for JADE is $N_P=50$, $p=0.05$, $c=0.1$, initial $\mu_F=\mu_{CR}=0.5$, archive enabled with capacity 50, bounds $[1,254]$, 30 independent runs, 30,000 function evaluations including initialisation, and four workers.
 
 \subsection{SHADE}
 
@@ -545,35 +558,58 @@ $3,5,7,9,11,12$ \\
 Independent runs &
 30 \\
 
-Maximum function evaluations &
-\textit{[Insert value]} \\
-
-Population size &
-\textit{[Insert value / algorithm-specific]} \\
-
-Tsallis $q$ &
-\textit{[Insert value, e.g. 0.8]} \\
-
-DE $F$ &
-\textit{[Insert value]} \\
-
-DE $CR$ &
-\textit{[Insert value]} \\
+JADE population size &
+50 \\
 
 JADE $p$ &
-\textit{[Insert value]} \\
+0.05 (three p-best candidates) \\
 
-SHADE memory size &
-\textit{[Insert value]} \\
+JADE adaptation rate $c$ &
+0.1 \\
 
-LADE history length &
-\textit{[Insert value]} \\
+JADE initial $\mu_F$, $\mu_{CR}$ &
+0.5, 0.5 \\
+
+JADE sampling scale for $F$ &
+0.1 (Cauchy distribution) \\
+
+JADE sampling standard deviation for $CR$ &
+0.1 (normal distribution) \\
+
+JADE external archive &
+Enabled; maximum 50 solutions \\
+
+JADE threshold bounds &
+$[1,254]$ \\
+
+JADE mutant boundary handling &
+Clipping \\
+
+JADE initialisation evaluations &
+50, included in the total budget \\
+
+Maximum function evaluations &
+30,000 per run, including initialisation \\
+
+Tsallis $q$ &
+0.8 \\
+
+Parallel workers for JADE experiments &
+4 \\
 
 Independent random seeds &
-\textit{[Describe procedure]} \\
+Deterministic seeds derived from each task and run \\
 
 \bottomrule
 \end{tabular}
+
+For the JADE experiments, random seeds were generated
+deterministically using an eight-byte BLAKE2b digest of
+the base seed, image identifier, objective, threshold count
+and run index, reduced modulo $2^{32}$. The base seed was
+\texttt{0xC05791}. Initial population evaluation consumed
+50 of the 30,000 objective-function evaluations permitted
+per run.
 
 \end{table}
 
@@ -704,148 +740,269 @@ each optimisation algorithm as dimensionality increases.
 % 6. EXPERIMENT 1 -- BSD500
 % =========================================================
 
+% JADE tables, figures and numerical discussion must be regenerated
+% after rerunning the corrected implementation. Existing JADE values
+% describe the previous implementation.
+
 \section{Experiment 1: BSD500 Benchmark Images}
+
 \label{sec:experiment1}
 
+\subsection{Experimental Objective and Completed Runs}
 
-\subsection{Experimental Objective}
-
-The purpose of the first experiment is to validate the implementations
-on standard benchmark images and establish baseline optimisation and
-convergence behaviour.
-
+This section reports the completed Standard DE (DE), Late Acceptance DE (LADE) and JADE experiments on the ten supplied BSD500 images. Results for SHADE and L-SHADE are not included in this comparison. Each algorithm was evaluated with Otsu, Kapur and Tsallis ($q=0.8$) at $K\in\{3,5,7,9,11,12\}$, using 30 runs per combination and a budget of 30,000 function evaluations, including initialisation. The saved results contain 5,400 successful runs per algorithm (16,200 in total); every run used the full budget and passed the recorded fitness-contract check.
 
 \subsection{Reconstruction Performance}
 
-% You will probably need several tables rather than one enormous table.
+Tables below report the mean and sample standard deviation of PSNR, SSIM and uniformity. Each entry pools 300 observations: 30 independent runs on each of ten images. Consequently, these standard deviations combine differences between images with stochastic variation within an image; they should not be interpreted solely as algorithm stability. Per-image means and standard deviations over the 30 runs are supplied in \texttt{report/exp1\_per\_image\_summary.csv}. Metrics use class-mean reconstruction, and higher values indicate better reconstruction quality. The displayed values are descriptive comparisons, without a claim of statistical significance.
 
-\begin{table}[H]
-\caption{PSNR results on BSD500 expressed as mean $\pm$ standard
-deviation over 30 independent runs.}
-\label{tab:bsd_psnr}
+\begin{table}[htbp]
 \centering
-
+\small
+\caption{PSNR (dB) on BSD500 using Otsu: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-otsu-psnr}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
-Algorithm &
-$K=3$ &
-$K=5$ &
-$K=7$ &
-$K=9$ &
-$K=11$ &
-$K=12$ \\
-
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
-
-DE      & -- & -- & -- & -- & -- & -- \\
-JADE    & -- & -- & -- & -- & -- & -- \\
-SHADE   & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE    & -- & -- & -- & -- & -- & -- \\
-
+DE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.8671 \pm 1.1393$ & $32.4792 \pm 1.2043$ & $33.7545 \pm 1.2723$ & $34.3369 \pm 1.2678$ \\
+LADE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.7982 \pm 1.1365$ & $32.4163 \pm 1.2276$ & $33.7414 \pm 1.2606$ & $34.2962 \pm 1.2471$ \\
+JADE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.9288 \pm 1.1366$ & $32.9946 \pm 1.2029$ & $34.6148 \pm 1.2259$ & $35.3339 \pm 1.2512$ \\
 \bottomrule
-\end{tabular}
-
+\end{tabular}%
+}
 \end{table}
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on BSD500 using Otsu: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-otsu-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.7419 \pm 0.0347$ & $0.8371 \pm 0.0296$ & $0.8841 \pm 0.0180$ & $0.9091 \pm 0.0162$ & $0.9256 \pm 0.0142$ & $0.9328 \pm 0.0130$ \\
+LADE & $0.7419 \pm 0.0347$ & $0.8371 \pm 0.0296$ & $0.8828 \pm 0.0184$ & $0.9086 \pm 0.0162$ & $0.9260 \pm 0.0140$ & $0.9323 \pm 0.0127$ \\
+JADE & $0.7419 \pm 0.0347$ & $0.8370 \pm 0.0296$ & $0.8847 \pm 0.0180$ & $0.9148 \pm 0.0150$ & $0.9341 \pm 0.0133$ & $0.9414 \pm 0.0116$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
-% Repeat equivalent tables for:
-%
-% - SSIM
-% - Uniformity
-%
-% Potentially make separate tables for Otsu/Kapur/Tsallis,
-% otherwise the tables will become too wide.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on BSD500 using Otsu: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-otsu-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.9774 \pm 0.0050$ & $0.9843 \pm 0.0032$ & $0.9878 \pm 0.0025$ & $0.9891 \pm 0.0024$ & $0.9900 \pm 0.0023$ & $0.9905 \pm 0.0022$ \\
+LADE & $0.9774 \pm 0.0050$ & $0.9843 \pm 0.0032$ & $0.9876 \pm 0.0026$ & $0.9889 \pm 0.0025$ & $0.9900 \pm 0.0023$ & $0.9904 \pm 0.0022$ \\
+JADE & $0.9774 \pm 0.0050$ & $0.9843 \pm 0.0032$ & $0.9880 \pm 0.0025$ & $0.9903 \pm 0.0021$ & $0.9919 \pm 0.0018$ & $0.9925 \pm 0.0017$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{PSNR (dB) on BSD500 using Kapur: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-kapur-psnr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $19.4855 \pm 1.6350$ & $22.4685 \pm 2.4731$ & $25.6184 \pm 3.4754$ & $28.8529 \pm 3.7906$ & $30.2395 \pm 3.8729$ & $30.9094 \pm 4.0271$ \\
+LADE & $19.4829 \pm 1.6353$ & $22.4801 \pm 2.4816$ & $25.5455 \pm 3.4747$ & $28.9409 \pm 3.7814$ & $30.2923 \pm 3.9450$ & $31.1000 \pm 3.8924$ \\
+JADE & $19.4827 \pm 1.6354$ & $22.4207 \pm 2.4403$ & $25.3924 \pm 3.3058$ & $28.6957 \pm 3.8762$ & $30.9791 \pm 4.1552$ & $31.9796 \pm 4.2302$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on BSD500 using Kapur: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-kapur-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.7331 \pm 0.0455$ & $0.8077 \pm 0.0335$ & $0.8472 \pm 0.0330$ & $0.8696 \pm 0.0278$ & $0.8882 \pm 0.0283$ & $0.8986 \pm 0.0281$ \\
+LADE & $0.7330 \pm 0.0455$ & $0.8081 \pm 0.0336$ & $0.8462 \pm 0.0299$ & $0.8702 \pm 0.0283$ & $0.8894 \pm 0.0296$ & $0.8994 \pm 0.0279$ \\
+JADE & $0.7330 \pm 0.0455$ & $0.8054 \pm 0.0321$ & $0.8500 \pm 0.0324$ & $0.8755 \pm 0.0254$ & $0.8964 \pm 0.0284$ & $0.9074 \pm 0.0289$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on BSD500 using Kapur: pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-kapur-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.9245 \pm 0.0299$ & $0.9315 \pm 0.0390$ & $0.9444 \pm 0.0532$ & $0.9576 \pm 0.0643$ & $0.9592 \pm 0.0700$ & $0.9587 \pm 0.0769$ \\
+LADE & $0.9244 \pm 0.0299$ & $0.9316 \pm 0.0390$ & $0.9436 \pm 0.0542$ & $0.9585 \pm 0.0631$ & $0.9584 \pm 0.0737$ & $0.9612 \pm 0.0737$ \\
+JADE & $0.9244 \pm 0.0299$ & $0.9309 \pm 0.0387$ & $0.9427 \pm 0.0527$ & $0.9569 \pm 0.0610$ & $0.9610 \pm 0.0726$ & $0.9615 \pm 0.0812$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{PSNR (dB) on BSD500 using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-tsallis-psnr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $19.9679 \pm 1.5122$ & $22.2757 \pm 1.9052$ & $24.9285 \pm 2.7596$ & $26.7242 \pm 3.1667$ & $27.9688 \pm 3.4248$ & $28.5999 \pm 3.5581$ \\
+LADE & $19.9686 \pm 1.5106$ & $22.2775 \pm 1.9060$ & $24.8655 \pm 2.7263$ & $26.8159 \pm 3.2056$ & $27.9820 \pm 3.4180$ & $28.6270 \pm 3.6095$ \\
+JADE & $19.9686 \pm 1.5106$ & $22.2713 \pm 1.9035$ & $24.8619 \pm 2.7877$ & $26.8375 \pm 3.1270$ & $28.1243 \pm 3.5085$ & $28.5532 \pm 3.4978$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on BSD500 using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-tsallis-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.7368 \pm 0.0388$ & $0.8105 \pm 0.0317$ & $0.8546 \pm 0.0215$ & $0.8804 \pm 0.0257$ & $0.9000 \pm 0.0271$ & $0.9068 \pm 0.0268$ \\
+LADE & $0.7368 \pm 0.0388$ & $0.8105 \pm 0.0315$ & $0.8529 \pm 0.0228$ & $0.8821 \pm 0.0250$ & $0.8991 \pm 0.0277$ & $0.9060 \pm 0.0278$ \\
+JADE & $0.7368 \pm 0.0388$ & $0.8100 \pm 0.0309$ & $0.8548 \pm 0.0219$ & $0.8851 \pm 0.0231$ & $0.9056 \pm 0.0272$ & $0.9139 \pm 0.0274$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on BSD500 using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 300 observations per entry (10 images, 30 runs each).}
+\label{tab:bsd-tsallis-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & $0.9330 \pm 0.0258$ & $0.9318 \pm 0.0360$ & $0.9413 \pm 0.0490$ & $0.9455 \pm 0.0557$ & $0.9457 \pm 0.0648$ & $0.9463 \pm 0.0703$ \\
+LADE & $0.9331 \pm 0.0257$ & $0.9318 \pm 0.0361$ & $0.9405 \pm 0.0497$ & $0.9455 \pm 0.0592$ & $0.9450 \pm 0.0695$ & $0.9459 \pm 0.0723$ \\
+JADE & $0.9331 \pm 0.0257$ & $0.9317 \pm 0.0360$ & $0.9402 \pm 0.0499$ & $0.9469 \pm 0.0558$ & $0.9466 \pm 0.0659$ & $0.9468 \pm 0.0671$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\clearpage
 
 \subsection{Effect of Threshold Level}
 
-% Discuss:
-%
-% K=3 -> K=12
-%
-% Does quality improve?
-% Does improvement plateau?
-% Does variance increase?
-% Does optimisation become harder?
-%
-% Do NOT just repeat values from tables.
-% Explain trends.
-
+Mean PSNR and SSIM increase from $K=3$ to $K=12$ for for DE and LADE algorithms under all three objectives. More thresholds permit finer intensity reconstruction, although gains diminish at higher $K$. For DE with Otsu, mean PSNR increases from 24.5370 to 34.3369 dB, while mean SSIM increases from 0.7419 to 0.9328. Uniformity is not strictly monotonic: DE's Kapur uniformity decreases slightly between $K=11$ and $K=12$, and Tsallis uniformity falls between $K=3$ and $K=5$. This metric includes an explicit factor of $K$, so improved PSNR does not guarantee a larger uniformity score.
 
 \subsection{Effect of Objective Function}
 
-% Compare:
-% Otsu vs Kapur vs Tsallis
-%
-% Questions:
-% - Which produces different segmentation behaviour?
-% - Does one consistently produce higher reconstruction metrics?
-% - Does performance depend on K?
-% - Does Tsallis q affect results?
-
+Otsu gives the highest mean PSNR and uniformity for for DE and LADE algorithms at every tested threshold count. Otsu also gives the highest mean SSIM at every tested threshold count. For DE at $K=12$, the mean PSNR values are 34.3369, 30.9094, and 28.5999 dB for Otsu, Kapur and Tsallis, respectively. Entropy maximisation and reconstruction quality are different criteria: a higher entropy objective does not necessarily produce a lower reconstruction error. Only $q=0.8$ was evaluated, so these results cannot establish the effect of changing $q$.
 
 \subsection{Convergence Analysis}
 
-\begin{figure}[H]
-    \centering
-    % \includegraphics[width=0.85\textwidth]{bsd_convergence_k12.pdf}
-    \caption{Convergence behaviour of the five DE algorithms for
-    \textit{[image]}, \textit{[objective]}, and $K=12$.}
-    \label{fig:bsd_convergence}
+\begin{figure}[htbp]
+
+\centering
+
+\includegraphics[width=\textwidth]{exp1_convergence.png}
+
+\caption{Best-so-far fitness for img1 at $K=12$. Lines show the median over 30 runs and shaded bands show the interquartile range. Each panel uses its own objective scale; fitness values are not comparable across objectives.}
+
+\label{fig:bsd_convergence}
+
 \end{figure}
 
-% Recommended plots:
-% x-axis = Function Evaluations
-% y-axis = Best Objective Value
-%
-% Prefer mean convergence over 30 runs with variability if possible.
-
+Figure~\ref{fig:bsd_convergence} compares convergence under an equal evaluation budget. Best-so-far fitness is retained independently of the current population in LADE, so its curves remain nondecreasing despite acceptance of some worse trials. These curves describe one illustrative image and do not alone establish a dataset-wide convergence advantage.
 
 \subsection{Visual Segmentation Results}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
+
 \centering
 
-% Example layout once figures exist:
-%
-% \begin{subfigure}{0.30\textwidth}
-% \includegraphics[width=\linewidth]{original.png}
-% \caption{Original}
-% \end{subfigure}
-%
-% \begin{subfigure}{0.30\textwidth}
-% \includegraphics[width=\linewidth]{de_segmented.png}
-% \caption{DE}
-% \end{subfigure}
-%
-% \begin{subfigure}{0.30\textwidth}
-% \includegraphics[width=\linewidth]{lshade_segmented.png}
-% \caption{L-SHADE}
-% \end{subfigure}
+\includegraphics[width=0.9\textwidth]{exp1_segmentation_otsu.png}
 
-\caption{Example BSD500 image and corresponding multilevel
-segmentation results.}
-\label{fig:bsd_segmentation}
+\caption{Original and segmented img1 under Otsu at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+
+\label{fig:bsd-segmentation-otsu}
 
 \end{figure}
 
+\begin{figure}[htbp]
+
+\centering
+
+\includegraphics[width=0.9\textwidth]{exp1_segmentation_kapur.png}
+
+\caption{Original and segmented img1 under Kapur at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+
+\label{fig:bsd-segmentation-kapur}
+
+\end{figure}
+
+\begin{figure}[htbp]
+
+\centering
+
+\includegraphics[width=0.9\textwidth]{exp1_segmentation_tsallis.png}
+
+\caption{Original and segmented img1 under Tsallis at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+
+\label{fig:bsd-segmentation-tsallis}
+
+\end{figure}
+
+\clearpage
+
+\subsection{Execution Time}
+
+\begin{figure}[htbp]
+
+\centering
+
+\includegraphics[width=0.8\textwidth]{exp1_runtime.png}
+
+\caption{Mean recorded optimisation time versus $K$. Error bars show sample standard deviation over 900 runs per algorithm and threshold count (10 images, three objectives, 30 runs). DE and LADE were run in separate sweeps, so machine load and worker settings can influence this comparison.}
+
+\label{fig:bsd-runtime}
+
+\end{figure}
+
+Timing covers optimiser execution and objective evaluations using \texttt{time.perf\_counter}; image loading, histogram preparation, exact reference computation, metric calculation and result writing are excluded. The saved results do not record hardware or worker counts, so runtime differences cannot be attributed exclusively to algorithm design.
 
 \subsection{Discussion of Experiment 1}
 
-% This subsection should answer:
-%
-% 1. Which behavioural differences were observed?
-% 2. How did increasing K affect performance?
-% 3. How did objective function choice affect segmentation?
-% 4. Which algorithms converged faster/slower?
-% 5. Was variability between the 30 runs substantial?
-% 6. What does Experiment 1 tell you before moving to MRI data?
-
-
-% =========================================================
-% 7. EXPERIMENT 2 -- CHAOS MRI
-% =========================================================
+Neither DE nor LADE consistently dominates the reconstruction metrics in their pairwise comparison. DE has slightly higher mean Otsu PSNR from $K=7$ through $K=12$, whereas LADE has higher mean Kapur PSNR at $K=5,9,11,12$. At $K=12$, LADE exceeds DE's Kapur PSNR by 0.1906 dB, while DE exceeds LADE's Otsu PSNR by 0.0406 dB. The Otsu results are identical at $K=3$. These small descriptive differences do not demonstrate significant superiority. LADE retains fixed DE control parameters and changes selection through a best-per-history-slot policy; this policy should be considered when interpreting the comparison. The experiment supports the expected improvement in reconstruction with more thresholds and shows a stronger descriptive effect of objective choice than of switching between these two optimisers. Full group conclusions require the remaining algorithms, paired statistical analysis and the MRI experiment.
 
 \section{Experiment 2: CHAOS MRI Images}
 \label{sec:experiment2}
@@ -1249,7 +1406,6 @@ submission repository.
 % REFERENCES
 % =========================================================
 
-\bibliography{sample}
+\bibliography{references}
 
 \end{document}
-```
