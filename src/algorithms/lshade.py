@@ -1,8 +1,6 @@
 import numpy as np
-from PIL import Image
-import matplotlib.pyplot as plt
 
-from .shade import SHADE
+from .shade import SHADE, _project_run
  
 class LSHADE(SHADE):
     name = "L-SHADE"
@@ -33,3 +31,12 @@ class LSHADE(SHADE):
     def _generation(self, rng):
         super()._generation(rng)
         self._shrink_population()
+
+
+def lshade(objective, dimensions, max_evaluations, *, population_size=50, H=10,
+           use_archive=True, N_min=4, lower_bound=1, upper_bound=254, seed=None):
+    """Project entry point; use a fixed initial population for paired seeds."""
+    return _project_run(LSHADE, objective, dimensions, max_evaluations,
+                        population_size=population_size, H=H, use_archive=use_archive,
+                        N_min=N_min, lower_bound=lower_bound,
+                        upper_bound=upper_bound, seed=seed)
