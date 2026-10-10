@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 from .shade import SHADE
 =======
 from .shade import SHADE
->>>>>>> c8d9b8c9413939b90bd238426cd6e87dbba1b850
  
 class LSHADE(SHADE):
     name = "L-SHADE"
