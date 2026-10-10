@@ -1,0 +1,13 @@
+metric,objective,other,loss,tie,win
+fitness,kapur,SHADE,30,29,1
+fitness,otsu,SHADE,32,28,0
+fitness,tsallis,SHADE,33,26,1
+psnr,kapur,SHADE,5,55,0
+psnr,otsu,SHADE,32,28,0
+psnr,tsallis,SHADE,3,57,0
+ssim,kapur,SHADE,1,59,0
+ssim,otsu,SHADE,12,47,1
+ssim,tsallis,SHADE,2,57,1
+uniformity,kapur,SHADE,5,55,0
+uniformity,otsu,SHADE,32,28,0
+uniformity,tsallis,SHADE,4,56,0
