@@ -19,9 +19,6 @@
 
 \journal{Expert Systems with Applications}
 
-\bibliographystyle{ieeetr}
-\bibliography{references}
-
 \begin{document}
 
 \begin{frontmatter}
@@ -41,7 +38,7 @@
 
 % Replace author details with your actual group members.
 Aryan Mohanlall$^{a}$ (u23565536@tuks.co.za),
-Second Author$^{a}$ (second.author@mail.com),
+Zingisa Matwana$^{a}$ (u25719302@tuks.co.za),
 Third Author$^{a}$ (third.author@mail.com),
 Fourth Author$^{a}$ (fourth.author@mail.com) \\
 
@@ -74,8 +71,8 @@ Email: u23565536@tuks.co.za
 \author[label1]{Aryan Mohanlall \corref{cor1}}
 \ead{u23565536@tuks.co.za}
 
-\author[label1]{Second Author}
-\ead{second.author@mail.com}
+\author[label1]{Zingisa Matwana}
+\ead{u25719302@tuks.co.za}
 
 \author[label1]{Third Author}
 \ead{third.author@mail.com}
@@ -632,10 +629,8 @@ For each independent run, the following information is recorded:
     \item SSIM;
     \item uniformity;
     \item execution time;
-    \item function evaluations;
-    \item convergence history;
-    \item Dice coefficient for CHAOS where applicable; and
-    \item Jaccard index for CHAOS where applicable.
+    \item function evaluations; and
+    \item convergence history.
 \end{itemize}
 
 
@@ -700,7 +695,7 @@ within the regions produced by multilevel thresholding.
 
 \subsection{Dice Similarity Coefficient}
 
-For the CHAOS experiment, the Dice coefficient is calculated as
+For the CHAOS experiment, the Dice coefficient is defined as
 
 \begin{equation}
 Dice =
@@ -711,10 +706,9 @@ Dice =
 where $A$ represents the predicted segmentation and $B$ represents the
 ground-truth mask.
 
-
 \subsection{Jaccard Index}
 
-The Jaccard index is
+The Jaccard index is defined as
 
 \begin{equation}
 J(A,B)
@@ -739,11 +733,7 @@ each optimisation algorithm as dimensionality increases.
 % =========================================================
 % 6. EXPERIMENT 1 -- BSD500
 % =========================================================
-
-% JADE tables, figures and numerical discussion must be regenerated
-% after rerunning the corrected implementation. Existing JADE values
-% describe the previous implementation.
-
+ 
 \section{Experiment 1: BSD500 Benchmark Images}
 
 \label{sec:experiment1}
@@ -768,7 +758,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.8671 \pm 1.1393$ & $32.4792 \pm 1.2043$ & $33.7545 \pm 1.2723$ & $34.3369 \pm 1.2678$ \\
 LADE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.7982 \pm 1.1365$ & $32.4163 \pm 1.2276$ & $33.7414 \pm 1.2606$ & $34.2962 \pm 1.2471$ \\
-JADE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.9288 \pm 1.1366$ & $32.9946 \pm 1.2029$ & $34.6148 \pm 1.2259$ & $35.3339 \pm 1.2512$ \\
+JADE & $24.5370 \pm 1.1806$ & $28.3282 \pm 1.1253$ & $30.9290 \pm 1.1367$ & $32.9960 \pm 1.2018$ & $34.6155 \pm 1.2258$ & $35.3331 \pm 1.2486$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -786,7 +776,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.7419 \pm 0.0347$ & $0.8371 \pm 0.0296$ & $0.8841 \pm 0.0180$ & $0.9091 \pm 0.0162$ & $0.9256 \pm 0.0142$ & $0.9328 \pm 0.0130$ \\
 LADE & $0.7419 \pm 0.0347$ & $0.8371 \pm 0.0296$ & $0.8828 \pm 0.0184$ & $0.9086 \pm 0.0162$ & $0.9260 \pm 0.0140$ & $0.9323 \pm 0.0127$ \\
-JADE & $0.7419 \pm 0.0347$ & $0.8370 \pm 0.0296$ & $0.8847 \pm 0.0180$ & $0.9148 \pm 0.0150$ & $0.9341 \pm 0.0133$ & $0.9414 \pm 0.0116$ \\
+JADE & $0.7419 \pm 0.0347$ & $0.8371 \pm 0.0296$ & $0.8847 \pm 0.0180$ & $0.9147 \pm 0.0149$ & $0.9341 \pm 0.0132$ & $0.9414 \pm 0.0115$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -822,7 +812,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $19.4855 \pm 1.6350$ & $22.4685 \pm 2.4731$ & $25.6184 \pm 3.4754$ & $28.8529 \pm 3.7906$ & $30.2395 \pm 3.8729$ & $30.9094 \pm 4.0271$ \\
 LADE & $19.4829 \pm 1.6353$ & $22.4801 \pm 2.4816$ & $25.5455 \pm 3.4747$ & $28.9409 \pm 3.7814$ & $30.2923 \pm 3.9450$ & $31.1000 \pm 3.8924$ \\
-JADE & $19.4827 \pm 1.6354$ & $22.4207 \pm 2.4403$ & $25.3924 \pm 3.3058$ & $28.6957 \pm 3.8762$ & $30.9791 \pm 4.1552$ & $31.9796 \pm 4.2302$ \\
+JADE & $19.4827 \pm 1.6354$ & $22.4220 \pm 2.4380$ & $25.3850 \pm 3.3018$ & $28.6743 \pm 3.8546$ & $30.8945 \pm 4.2187$ & $31.9440 \pm 4.2093$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -840,7 +830,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.7331 \pm 0.0455$ & $0.8077 \pm 0.0335$ & $0.8472 \pm 0.0330$ & $0.8696 \pm 0.0278$ & $0.8882 \pm 0.0283$ & $0.8986 \pm 0.0281$ \\
 LADE & $0.7330 \pm 0.0455$ & $0.8081 \pm 0.0336$ & $0.8462 \pm 0.0299$ & $0.8702 \pm 0.0283$ & $0.8894 \pm 0.0296$ & $0.8994 \pm 0.0279$ \\
-JADE & $0.7330 \pm 0.0455$ & $0.8054 \pm 0.0321$ & $0.8500 \pm 0.0324$ & $0.8755 \pm 0.0254$ & $0.8964 \pm 0.0284$ & $0.9074 \pm 0.0289$ \\
+JADE & $0.7330 \pm 0.0455$ & $0.8054 \pm 0.0321$ & $0.8496 \pm 0.0326$ & $0.8756 \pm 0.0253$ & $0.8961 \pm 0.0287$ & $0.9072 \pm 0.0283$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -858,7 +848,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9245 \pm 0.0299$ & $0.9315 \pm 0.0390$ & $0.9444 \pm 0.0532$ & $0.9576 \pm 0.0643$ & $0.9592 \pm 0.0700$ & $0.9587 \pm 0.0769$ \\
 LADE & $0.9244 \pm 0.0299$ & $0.9316 \pm 0.0390$ & $0.9436 \pm 0.0542$ & $0.9585 \pm 0.0631$ & $0.9584 \pm 0.0737$ & $0.9612 \pm 0.0737$ \\
-JADE & $0.9244 \pm 0.0299$ & $0.9309 \pm 0.0387$ & $0.9427 \pm 0.0527$ & $0.9569 \pm 0.0610$ & $0.9610 \pm 0.0726$ & $0.9615 \pm 0.0812$ \\
+JADE & $0.9244 \pm 0.0299$ & $0.9310 \pm 0.0387$ & $0.9426 \pm 0.0527$ & $0.9569 \pm 0.0611$ & $0.9599 \pm 0.0744$ & $0.9621 \pm 0.0786$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -876,7 +866,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $19.9679 \pm 1.5122$ & $22.2757 \pm 1.9052$ & $24.9285 \pm 2.7596$ & $26.7242 \pm 3.1667$ & $27.9688 \pm 3.4248$ & $28.5999 \pm 3.5581$ \\
 LADE & $19.9686 \pm 1.5106$ & $22.2775 \pm 1.9060$ & $24.8655 \pm 2.7263$ & $26.8159 \pm 3.2056$ & $27.9820 \pm 3.4180$ & $28.6270 \pm 3.6095$ \\
-JADE & $19.9686 \pm 1.5106$ & $22.2713 \pm 1.9035$ & $24.8619 \pm 2.7877$ & $26.8375 \pm 3.1270$ & $28.1243 \pm 3.5085$ & $28.5532 \pm 3.4978$ \\
+JADE & $19.9686 \pm 1.5106$ & $22.2741 \pm 1.9003$ & $24.8584 \pm 2.7890$ & $26.8223 \pm 3.1281$ & $28.1322 \pm 3.5159$ & $28.5486 \pm 3.5103$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -894,7 +884,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.7368 \pm 0.0388$ & $0.8105 \pm 0.0317$ & $0.8546 \pm 0.0215$ & $0.8804 \pm 0.0257$ & $0.9000 \pm 0.0271$ & $0.9068 \pm 0.0268$ \\
 LADE & $0.7368 \pm 0.0388$ & $0.8105 \pm 0.0315$ & $0.8529 \pm 0.0228$ & $0.8821 \pm 0.0250$ & $0.8991 \pm 0.0277$ & $0.9060 \pm 0.0278$ \\
-JADE & $0.7368 \pm 0.0388$ & $0.8100 \pm 0.0309$ & $0.8548 \pm 0.0219$ & $0.8851 \pm 0.0231$ & $0.9056 \pm 0.0272$ & $0.9139 \pm 0.0274$ \\
+JADE & $0.7368 \pm 0.0388$ & $0.8102 \pm 0.0310$ & $0.8551 \pm 0.0217$ & $0.8849 \pm 0.0232$ & $0.9057 \pm 0.0273$ & $0.9138 \pm 0.0274$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -912,7 +902,7 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9330 \pm 0.0258$ & $0.9318 \pm 0.0360$ & $0.9413 \pm 0.0490$ & $0.9455 \pm 0.0557$ & $0.9457 \pm 0.0648$ & $0.9463 \pm 0.0703$ \\
 LADE & $0.9331 \pm 0.0257$ & $0.9318 \pm 0.0361$ & $0.9405 \pm 0.0497$ & $0.9455 \pm 0.0592$ & $0.9450 \pm 0.0695$ & $0.9459 \pm 0.0723$ \\
-JADE & $0.9331 \pm 0.0257$ & $0.9317 \pm 0.0360$ & $0.9402 \pm 0.0499$ & $0.9469 \pm 0.0558$ & $0.9466 \pm 0.0659$ & $0.9468 \pm 0.0671$ \\
+JADE & $0.9331 \pm 0.0257$ & $0.9318 \pm 0.0360$ & $0.9401 \pm 0.0499$ & $0.9467 \pm 0.0560$ & $0.9465 \pm 0.0663$ & $0.9466 \pm 0.0677$ \\
 \bottomrule
 \end{tabular}%
 }
@@ -922,11 +912,11 @@ JADE & $0.9331 \pm 0.0257$ & $0.9317 \pm 0.0360$ & $0.9402 \pm 0.0499$ & $0.9469
 
 \subsection{Effect of Threshold Level}
 
-Mean PSNR and SSIM increase from $K=3$ to $K=12$ for for DE and LADE algorithms under all three objectives. More thresholds permit finer intensity reconstruction, although gains diminish at higher $K$. For DE with Otsu, mean PSNR increases from 24.5370 to 34.3369 dB, while mean SSIM increases from 0.7419 to 0.9328. Uniformity is not strictly monotonic: DE's Kapur uniformity decreases slightly between $K=11$ and $K=12$, and Tsallis uniformity falls between $K=3$ and $K=5$. This metric includes an explicit factor of $K$, so improved PSNR does not guarantee a larger uniformity score.
+Mean PSNR and SSIM increase from $K=3$ to $K=12$ for DE, LADE and JADE under all three objectives. More thresholds permit finer intensity reconstruction, although gains diminish at higher $K$. For JADE under Otsu, mean PSNR increases from 24.5370 dB at $K=3$ to 35.3331 dB at $K=12$, while mean SSIM increases from 0.7419 to 0.9414. At $K=3$ and $K=5$, the reported Otsu reconstruction metrics are identical across DE, LADE and JADE to four decimal places. At $K=12$, JADE achieves a higher mean PSNR under Otsu (35.3331 dB) than DE (34.3369 dB), a descriptive difference of 0.9962 dB. This difference does not establish statistical significance. Uniformity is not strictly monotonic: DE's Kapur uniformity decreases slightly between $K=11$ and $K=12$, and Tsallis uniformity falls between $K=3$ and $K=5$. This metric includes an explicit factor of $K$, so improved PSNR does not guarantee a larger uniformity score. The pooled standard deviations include both image-to-image variability and within-image variation across runs; they should not be interpreted as per-image stability estimates.
 
 \subsection{Effect of Objective Function}
 
-Otsu gives the highest mean PSNR and uniformity for for DE and LADE algorithms at every tested threshold count. Otsu also gives the highest mean SSIM at every tested threshold count. For DE at $K=12$, the mean PSNR values are 34.3369, 30.9094, and 28.5999 dB for Otsu, Kapur and Tsallis, respectively. Entropy maximisation and reconstruction quality are different criteria: a higher entropy objective does not necessarily produce a lower reconstruction error. Only $q=0.8$ was evaluated, so these results cannot establish the effect of changing $q$.
+Otsu gives the highest mean PSNR and uniformity for DE, LADE and JADE at every tested threshold count. Otsu also gives the highest mean SSIM at every tested threshold count. For JADE at $K=12$, Otsu produces the highest mean PSNR (35.3331 dB), followed by Kapur (31.9440 dB) and Tsallis (28.5486 dB). The corresponding mean SSIM values are 0.9414, 0.9072 and 0.9138, respectively. Thus, the ordering of Kapur and Tsallis differs between PSNR and SSIM. For DE at $K=12$, the mean PSNR values are 34.3369, 30.9094, and 28.5999 dB for Otsu, Kapur and Tsallis, respectively. Entropy maximisation and reconstruction quality are different criteria: a higher entropy objective does not necessarily produce a lower reconstruction error. Only $q=0.8$ was evaluated, so these results cannot establish the effect of changing $q$. The pooled standard deviations include both between-image and within-image variability; claims about stability or convergence require per-image summaries and convergence evidence.
 
 \subsection{Convergence Analysis}
 
@@ -952,7 +942,7 @@ Figure~\ref{fig:bsd_convergence} compares convergence under an equal evaluation 
 
 \includegraphics[width=0.9\textwidth]{exp1_segmentation_otsu.png}
 
-\caption{Original and segmented img1 under Otsu at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+\caption{Original and segmented img1 under Otsu at $K=3,7,12$. DE occupies the first row, LADE the second, and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
 
 \label{fig:bsd-segmentation-otsu}
 
@@ -964,7 +954,7 @@ Figure~\ref{fig:bsd_convergence} compares convergence under an equal evaluation 
 
 \includegraphics[width=0.9\textwidth]{exp1_segmentation_kapur.png}
 
-\caption{Original and segmented img1 under Kapur at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+\caption{Original and segmented img1 under Kapur at $K=3,7,12$. DE occupies the first row, LADE the second, and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
 
 \label{fig:bsd-segmentation-kapur}
 
@@ -976,7 +966,7 @@ Figure~\ref{fig:bsd_convergence} compares convergence under an equal evaluation 
 
 \includegraphics[width=0.9\textwidth]{exp1_segmentation_tsallis.png}
 
-\caption{Original and segmented img1 under Tsallis at $K=3,7,12$. DE occupies the first row, LADE the second . Each solution and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
+\caption{Original and segmented img1 under Tsallis at $K=3,7,12$. DE occupies the first row, LADE the second, and JADE the third. Each solution is selected by fitness closest to the median of its 30 runs (ties use the lowest run index). Class intensities are spread evenly for display; PSNR and SSIM are computed using class means instead.}
 
 \label{fig:bsd-segmentation-tsallis}
 
@@ -992,7 +982,7 @@ Figure~\ref{fig:bsd_convergence} compares convergence under an equal evaluation 
 
 \includegraphics[width=0.8\textwidth]{exp1_runtime.png}
 
-\caption{Mean recorded optimisation time versus $K$. Error bars show sample standard deviation over 900 runs per algorithm and threshold count (10 images, three objectives, 30 runs). DE and LADE were run in separate sweeps, so machine load and worker settings can influence this comparison.}
+\caption{Mean recorded optimisation time versus $K$ for DE, LADE and JADE. Error bars show sample standard deviation over 900 runs per algorithm and threshold count (10 images, three objectives, 30 runs). DE, LADE and JADE were run in separate sweeps, so machine load and worker settings can influence this comparison.}
 
 \label{fig:bsd-runtime}
 
@@ -1002,135 +992,430 @@ Timing covers optimiser execution and objective evaluations using \texttt{time.p
 
 \subsection{Discussion of Experiment 1}
 
-Neither DE nor LADE consistently dominates the reconstruction metrics in their pairwise comparison. DE has slightly higher mean Otsu PSNR from $K=7$ through $K=12$, whereas LADE has higher mean Kapur PSNR at $K=5,9,11,12$. At $K=12$, LADE exceeds DE's Kapur PSNR by 0.1906 dB, while DE exceeds LADE's Otsu PSNR by 0.0406 dB. The Otsu results are identical at $K=3$. These small descriptive differences do not demonstrate significant superiority. LADE retains fixed DE control parameters and changes selection through a best-per-history-slot policy; this policy should be considered when interpreting the comparison. The experiment supports the expected improvement in reconstruction with more thresholds and shows a stronger descriptive effect of objective choice than of switching between these two optimisers. Full group conclusions require the remaining algorithms, paired statistical analysis and the MRI experiment.
+JADE does not lead every reconstruction metric. At $K=12$, it has the highest reported mean PSNR and SSIM under Otsu and Kapur. Under Tsallis, however, its mean PSNR (28.5486 dB) is lower than DE (28.5999 dB) and LADE (28.6270 dB), while its mean SSIM (0.9138) is higher. These descriptive results show that the comparison depends on both the objective function and the evaluation metric. The pooled standard deviations remain descriptive summaries that combine differences between images with stochastic variation within images; therefore, they do not establish JADE stability or faster convergence without per-image run summaries and convergence evidence. Overall, the experiment supports the expected improvement in reconstruction with more thresholds and shows that objective choice affects the relative ranking of algorithms more strongly than any single optimiser dominates across all metrics.
 
 \section{Experiment 2: CHAOS MRI Images}
-\label{sec:experiment2}
 
+\label{sec:experiment2}
 
 \subsection{Experimental Objective}
 
-The second experiment assesses the algorithms on medical MRI images,
-with particular emphasis on robustness, segmentation quality, and
-stability under increasing threshold dimensionality.
-
+Results for JADE on 15 CHAOS MRI images, using Otsu, Kapur and Tsallis ($q=0.8$), with $K\in\{3,5,7,9,11,12\}$. Each image--objective--threshold combination contains 30 runs with 30,000 function evaluations per run.
 
 \subsection{Ground-Truth Mask Matching}
 
-% IMPORTANT because the marking rubric explicitly mentions this.
-%
-% Explain precisely:
-% - CHAOS ground truth representation
-% - which segmented threshold class corresponds to target anatomy
-% - how the class is selected/matched to GT
-% - whether this matching is automatic
-% - whether Dice/Jaccard is calculated per image/run
-
+--
 
 \subsection{Reconstruction Metrics}
 
-\begin{table}[H]
-\caption{PSNR on CHAOS MRI images expressed as mean $\pm$ standard
-deviation over 30 independent runs.}
-\label{tab:chaos_psnr}
-\centering
+Tables report pooled means and sample standard deviations across images and runs. Dashes indicate unavailable results.
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{PSNR (dB) on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-psnr}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
-Algorithm &
-$K=3$ &
-$K=5$ &
-$K=7$ &
-$K=9$ &
-$K=11$ &
-$K=12$ \\
-
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
-
-DE      & -- & -- & -- & -- & -- & -- \\
-JADE    & -- & -- & -- & -- & -- & -- \\
-SHADE   & -- & -- & -- & -- & -- & -- \\
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $27.8831 \pm 0.8927$ & $31.4137 \pm 0.8965$ & $33.9062 \pm 0.9500$ & $35.8692 \pm 0.9422$ & $37.4321 \pm 0.9455$ & $38.1275 \pm 0.9562$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
 L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE    & -- & -- & -- & -- & -- & -- \\
-
+LADE & -- & -- & -- & -- & -- & -- \\
 \bottomrule
-\end{tabular}
-
+\end{tabular}%
+}
 \end{table}
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.8664 \pm 0.0411$ & $0.9241 \pm 0.0219$ & $0.9499 \pm 0.0144$ & $0.9643 \pm 0.0110$ & $0.9730 \pm 0.0085$ & $0.9763 \pm 0.0077$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9942 \pm 0.0012$ & $0.9952 \pm 0.0010$ & $0.9959 \pm 0.0008$ & $0.9962 \pm 0.0008$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Class separability on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-class_separability}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9941 \pm 0.0015$ & $0.9962 \pm 0.0010$ & $0.9974 \pm 0.0006$ & $0.9978 \pm 0.0006$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{PSNR (dB) on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-psnr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $23.9215 \pm 3.2645$ & $29.5511 \pm 1.0776$ & $32.5735 \pm 0.8779$ & $34.6452 \pm 0.9256$ & $36.3602 \pm 0.7879$ & $37.0384 \pm 0.7995$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.6508 \pm 0.2917$ & $0.9106 \pm 0.0268$ & $0.9396 \pm 0.0163$ & $0.9550 \pm 0.0134$ & $0.9660 \pm 0.0104$ & $0.9695 \pm 0.0097$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.9654 \pm 0.0376$ & $0.9885 \pm 0.0031$ & $0.9921 \pm 0.0015$ & $0.9937 \pm 0.0013$ & $0.9948 \pm 0.0009$ & $0.9952 \pm 0.0009$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Class separability on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-class_separability}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.9105 \pm 0.0956$ & $0.9835 \pm 0.0056$ & $0.9919 \pm 0.0023$ & $0.9950 \pm 0.0015$ & $0.9966 \pm 0.0010$ & $0.9971 \pm 0.0009$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{PSNR (dB) on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-psnr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $19.2181 \pm 1.6513$ & $21.6337 \pm 1.1302$ & $23.2396 \pm 1.2537$ & $24.9296 \pm 1.4644$ & $28.0504 \pm 2.9103$ & $31.8409 \pm 3.9607$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{SSIM on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-ssim}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.2650 \pm 0.0370$ & $0.3347 \pm 0.0436$ & $0.3878 \pm 0.0616$ & $0.4550 \pm 0.0676$ & $0.6016 \pm 0.1498$ & $0.7632 \pm 0.1805$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Uniformity on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-uniformity}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.9224 \pm 0.0329$ & $0.9290 \pm 0.0186$ & $0.9308 \pm 0.0199$ & $0.9388 \pm 0.0211$ & $0.9588 \pm 0.0216$ & $0.9771 \pm 0.0180$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Class separability on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-class_separability}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & $0.8128 \pm 0.0919$ & $0.8981 \pm 0.0340$ & $0.9262 \pm 0.0348$ & $0.9507 \pm 0.0195$ & $0.9717 \pm 0.0165$ & $0.9844 \pm 0.0144$ \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
 \subsection{Ground-Truth Segmentation Performance}
 
-\begin{table}[H]
-\caption{Dice coefficient on CHAOS MRI images expressed as
-mean $\pm$ standard deviation.}
-\label{tab:chaos_dice}
+\begin{table}[htbp]
 \centering
-
+\small
+\caption{Dice coefficient on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-dice}
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{lcccccc}
 \toprule
-Algorithm &
-$K=3$ &
-$K=5$ &
-$K=7$ &
-$K=9$ &
-$K=11$ &
-$K=12$ \\
-
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
-
-DE      & -- & -- & -- & -- & -- & -- \\
-JADE    & -- & -- & -- & -- & -- & -- \\
-SHADE   & -- & -- & -- & -- & -- & -- \\
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
 L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE    & -- & -- & -- & -- & -- & -- \\
-
+LADE & -- & -- & -- & -- & -- & -- \\
 \bottomrule
-\end{tabular}
-
+\end{tabular}%
+}
 \end{table}
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{Jaccard index on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-otsu-jaccard}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
-% Add equivalent Jaccard table.
+\begin{table}[htbp]
+\centering
+\small
+\caption{Dice coefficient on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-dice}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
+\begin{table}[htbp]
+\centering
+\small
+\caption{Jaccard index on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-kapur-jaccard}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Dice coefficient on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-dice}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\small
+\caption{Jaccard index on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
+\label{tab:chaos-tsallis-jaccard}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
+\midrule
+DE & -- & -- & -- & -- & -- & -- \\
+JADE & -- & -- & -- & -- & -- & -- \\
+SHADE & -- & -- & -- & -- & -- & -- \\
+L-SHADE & -- & -- & -- & -- & -- & -- \\
+LADE & -- & -- & -- & -- & -- & -- \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
 \subsection{Visual MRI Segmentation Results}
 
-\begin{figure}[H]
-    \centering
-
-    % Add:
-    % Original MRI
-    % Ground truth
-    % DE segmentation
-    % JADE segmentation
-    % SHADE segmentation
-    % L-SHADE segmentation
-    % LADE segmentation
-
-    \caption{Example CHAOS MRI slice, ground-truth mask and
-    segmentation outputs produced by the evaluated algorithms.}
-    \label{fig:chaos_visual}
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{exp2_segmentation_otsu.png}
+\caption{Original and thresholded image IMG-0003-00010 using Otsu at $K=3,7,12$. Rows: JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\label{fig:chaos-otsu}
 \end{figure}
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{exp2_segmentation_kapur.png}
+\caption{Original and thresholded image IMG-0003-00010 using Kapur at $K=3,7,12$. Rows: JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\label{fig:chaos-kapur}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{exp2_segmentation_tsallis.png}
+\caption{Original and thresholded image IMG-0003-00010 using Tsallis at $K=3,7,12$. Rows: JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\label{fig:chaos-tsallis}
+\end{figure}
+
+\subsection{Convergence Analysis}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{exp2_convergence.png}
+\caption{Best-so-far fitness for image IMG-0003-00010 at $K=12$. Lines show medians over 30 runs; bands show interquartile ranges.}
+\label{fig:chaos-convergence}
+\end{figure}
+
+\subsection{Execution Time}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.9\textwidth]{exp2_runtime.png}
+\caption{Mean recorded optimisation time versus $K$, with sample standard deviation as error bars, pooled across images, objectives and runs.}
+\label{fig:chaos-runtime}
+\end{figure}
 
 \subsection{Discussion of Experiment 2}
 
-% Address:
-%
-% - reconstruction metric behaviour
-% - Dice/Jaccard behaviour
-% - differences from BSD500
-% - medical-image characteristics
-% - stability
-% - effect of K
-% - effect of objective
-% - Tsallis q
-
-
-% =========================================================
-% 8. STATISTICAL ANALYSIS
-% =========================================================
+--
 
 \section{Statistical Analysis}
 \label{sec:statistics}
@@ -1406,6 +1691,7 @@ submission repository.
 % REFERENCES
 % =========================================================
 
+\bibliographystyle{ieeetr}
 \bibliography{references}
 
 \end{document}
