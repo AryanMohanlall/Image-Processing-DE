@@ -1,15 +1,3 @@
-"""
-Tests for src/algorithms/shade.py
-
-Run from the project root:
-    pytest tests/test_shade.py -v
-
-These don't test "does it find the true optimum" (that needs a real image
-and takes too long for a unit test) -- they test the properties that MUST
-hold regardless of the objective: valid thresholds, respected FE budget,
-monotonic improvement, reproducibility, and correct input validation.
-"""
-
 import numpy as np
 import pytest
 
