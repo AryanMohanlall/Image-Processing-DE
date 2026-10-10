@@ -1,0 +1,485 @@
+\documentclass[a4paper,10pt]{article}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{lmodern}
+\usepackage{mdframed}
+\usepackage{url}
+\usepackage{pgfcalendar}
+\usepackage{pgfgantt}
+\usepackage{booktabs}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{float}
+\usetikzlibrary{arrows.meta,positioning,calc} 
+
+\newcommand{\cmark}{\checkmark}
+\newcommand{\xmark}{$\times$}
+
+\newcommand{\BlackBox}{\rule{1.5ex}{1.5ex}}
+
+\definecolor{blue}{rgb}{0,0,0.8}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset
+{
+   basicstyle=\ttfamily\footnotesize,
+   language=C++,
+   numbers=right,
+   numberstyle=\color{gray},
+   showtabs=true,
+   breaklines=true,
+   breakatwhitespace=true,
+   captionpos=bottom,
+   keywordstyle=\color{blue},
+   commentstyle=\color{dkgreen},
+   stringstyle=\color{mauve},
+   frame=single
+}
+
+
+
+\mdfsetup
+{
+   skipabove=\topskip,
+   skipbelow=\topskip,
+   leftmargin=2em,
+   rightmargin=2em
+}
+
+
+\title
+{
+   \includegraphics[width=12cm]{up_logo.png} \\
+   \vspace{2cm}
+   \textbf{COS700 Research Report} \\ \vspace{0.5cm}
+   \textbf{Segment-Aware Video Fusion for Cross-Domain Multimodal Misinformation Detection} \\ \vspace{0.5cm}
+   \textbf{Student number:} u21572993, u25719302 \\ \vspace{0.5cm}  
+   \textbf{Supervisor(s)}: \\ Dr. S. Rananga \\ Miss. P. Matloga
+}
+
+\date{}
+\begin{document}
+
+\maketitle
+
+\newpage
+\linespread{1.25}
+
+\section*{Abstract}
+Advanced multimodal misinformation detection frameworks have been developed primarily focusing on text-based and text-to-image analysis and fusion strategies, while video remains a largely underexplored modality. Existing research that incorporates video mainly focuses on single-domain datasets, video metadata, and video transcription, which limits salient feature extraction and results in the loss of temporal video features. The proliferation of multimodal social media content requires comprehensive approaches that combine text, image, and video to effectively detect misinformation. The research proposal aims to develop a multimodal misinformation framework that leverages deep learning techniques for feature extraction and analysis. The FakingRecipe multimodal framework will be adapted by replacing its frame-sampling strategy with a segment-aware video processing pipeline that selects keyframes at points of significant visual change using the frame difference method. The framework will be evaluated on publicly available short video misinformation datasets to assess the performance of segment-aware video fusion, fusion strategies, and the adapted FakingRecipe framework.
+\section*{Keywords:}
+Multimodal misinformation detection, attention-based video fusion, segment-aware processing, cross domain generalisation, large language models, fake news detection.
+\newpage
+
+\section{Introduction}
+The exponential growth of internet usage and social media platforms such as TikTok, X (formerly Twitter), and Facebook has led to a significant increase in the spread of information, including misinformation. While these platforms have made it easier for people to access and share information, they have also become tools for spreading misinformation \cite{melchior2024systematic}. According to Wardle and Derakhshan's framework, three categories of problematic content can be distinguished \cite{wardle2017information}. Misinformation describes false content circulated without intent to deceive, whereas disinformation describes false content deliberately fabricated and spread to cause harm or advance an agenda. Mal-information covers genuine information shared maliciously to cause harm. The distinction between the three categories is important as detection systems need to account for the intent behind the content they are to flag. Platforms like TikTok have become major vectors for misinformation, creating a growing need for detection systems capable of reasoning about video content directly, rather than relying solely on text and images. The academic literature on misinformation detection has followed a clear progression: early systems worked exclusively with text \cite{capuano2023content}, more recent systems incorporated images alongside text \cite{zhang2025multimodal,zhou2023mmfn,huang2025deetsa}, and video has only recently begun to receive attention \cite{shang2025multitec,yang2026unified}. The best-performing text-image models achieve 88--98\% accuracy on standard benchmarks, yet video remains absent from eight of the ten most recent systems reviewed in a scoping study conducted during the first phase of this research. For instance, videos can be manipulated to create deepfakes \cite{shahzad2026save}, be accompanied with misleading captions or titles, or exploit emotional imagery to create deceptive impressions. The rise of multimodal content has made it more challenging for existing automated detection systems, which must interpret and integrate multiple modalities of data. Two significant constraints characterise existing work on video-based misinformation detection. First, systems that do incorporate video are typically evaluated on single-domain or platform-specific datasets, which limits what can be said about their ability to generalise. MultiTec \cite{shang2025multitec}, the most technically advanced video pipeline reviewed, is trained and evaluated exclusively on proprietary TikTok health misinformation data. USAR \cite{yang2026unified}, which introduced hierarchical segment-level analysis, is evaluated on a single publicly available benchmark but does not report cross-domain disaggregation. Second, earlier systems that nominally address video content do so in a shallow manner: YouRV \cite{kim2025yourv} treats video as thumbnail and metadata only, never analysing the video stream itself. A gap therefore exists at the intersection of segment-aware video processing and cross-domain generalisation on a publicly available benchmark. This study addresses that gap by adapting FakingRecipe \cite{bu2024fakingrecipe}, a framework with public code and demonstrated performance on a publicly available multi-domain dataset, with enhanced segment-aware video processing. This makes it possible to investigate directly whether temporally grounded video understanding improves fake news detection beyond what text and image fusion alone can achieve.
+
+\section{Problem Statement}
+\label{sec:problem_statement}
+
+Multimodal misinformation detection has advanced from text-only approaches to systems integrating textual and visual information. However, the effective incorporation of temporal video information remains a challenge. Many existing approaches either exclude video or represent it using sampled static frames, potentially overlooking important temporal relationships. Furthermore, the generalisation of video-based misinformation detection across different topic domains remains insufficiently understood, as many existing systems are evaluated on platform-specific or limited-domain datasets.
+
+Another challenge concerns the integration of multiple modalities. Conventional fusion techniques, particularly feature concatenation, combine modality representations without explicitly modelling relationships between textual, spatial, and temporal information. Consequently, the extent to which additional video information and attention-based fusion strategies improve detection performance remains unclear.
+
+This study investigated these challenges through two complementary sub-problems: segment-aware video processing and cross-domain generalisation, and modality ablation and fusion strategy comparison.
+
+\subsection{Sub-problem 1: Segment-Aware Video Processing and Cross-Domain Generalisation}
+
+Previous studies have explored segment-level video representations to capture temporal information beyond uniformly sampled frames \cite{yang2026unified,hu2025magefend}. However, their effectiveness in cross-domain misinformation detection requires further investigation.
+
+The first sub-problem focused on adapting the FakingRecipe framework \cite{bu2024fakingrecipe} by incorporating a segment-aware video processing pipeline based on frame differences. The investigation examined the application of the adapted framework to a publicly available multi-domain short-video misinformation dataset and its detection performance across different topic domains.
+
+The following research questions guided this sub-problem:
+
+\begin{itemize}
+    \item \textbf{RQ1:} To what extent can FakingRecipe be adapted with enhanced segment-aware video processing for application to a cross-domain short-video misinformation dataset?
+
+    \item \textbf{RQ2:} How does the adapted pipeline perform in detecting fake news videos when evaluated across diverse topic domains?
+
+    \item \textbf{RQ3:} How does detection performance vary across different topic domains, and what factors influence that variation?
+\end{itemize}
+
+The objectives of this sub-problem were:
+
+\begin{itemize}
+    \item \textbf{Objective 1:} Adapt FakingRecipe with segment-aware video processing for application to a publicly available cross-domain short-video misinformation dataset.
+
+    \item \textbf{Objective 2:} Evaluate the detection performance of the adapted pipeline across different topic domains using appropriate classification metrics.
+
+    \item \textbf{Objective 3:} Analyse variations in detection performance across topic domains and identify potential contributing factors.
+\end{itemize}
+
+\subsection{Sub-problem 2: Modality Ablation and Fusion Strategy Comparison}
+
+Although multimodal approaches have demonstrated improvements over text-only misinformation detection, the contribution of temporal video information and the effectiveness of different fusion strategies remain insufficiently characterised. Existing approaches may rely on video transcriptions or metadata rather than explicitly modelling temporal features \cite{zhong2024vmid}. Furthermore, conventional fusion mechanisms may not adequately capture relationships between modalities \cite{yuan2025msscr}.
+
+The second sub-problem investigated how modality composition and fusion strategy influenced misinformation detection performance. Four incrementally constructed models were implemented and evaluated: text-only, text-image, text-image-video with concatenation, and text-image-video with cross-modal attention. The models were compared using event-aware and chronological evaluation protocols to examine the contribution of visual information and the effectiveness of attention-based fusion.
+
+The following research questions guided this sub-problem:
+
+\begin{itemize}
+    \item \textbf{RQ4:} How does the integration of video data influence multimodal misinformation detection performance compared to text-only and text-image models?
+
+    \item \textbf{RQ5:} How do attention-based fusion strategies compare to concatenation-based approaches in multimodal misinformation detection?
+\end{itemize}
+
+\subsection{Main Objective}
+
+The overall objective of this study was to investigate the contribution of segment-aware video processing and multimodal fusion strategies to short-video misinformation detection, with particular emphasis on detection performance and generalisation across evaluation settings.
+
+This objective was addressed through two complementary research objectives:
+
+\begin{itemize}
+    \item \textbf{Objective 1:} Adapt the FakingRecipe framework \cite{bu2024fakingrecipe} using segment-aware video processing and evaluate its performance and generalisation across topic domains.
+
+    \item \textbf{Objective 2:} Evaluate the contributions of text, image, and temporal video information, and compare concatenation-based and attention-based fusion strategies through controlled model ablation.
+\end{itemize} 
+
+\section{Literature Study}
+This literature study reviews work spanning three broad phases of development in automated misinfor
+mation detection. The review reflects that progression: text-only systems are considered first, followed by
+text-image fusion systems, and finally video-inclusive systems. The base framework and primary dataset
+are then discussed, and the section concludes with a synthesis of the gaps identified across the reviewed
+work.
+
+\subsection{Text-Only Misinformation Detection}
+The earliest automated misinformation detection systems operated exclusively on textual content. In a systematic review covering 40 studies, Capuano et al. \cite{capuano2023content} found that classical machine learning approaches, including Gradient Boosting and SVM, achieved competitive results when applied to text-based features alone. Critically, none of the studies reviewed included images or video. Earlier work had also employed recurrent approaches: Ruchansky et al. \cite{ruchansky2017csi} proposed the CSI model, which captures article text, user comments, and user behaviour to identify misinformation using a three-component pipeline. Reddy et al. \cite{reddy2020text} applied ensemble classifiers including random forest and naive Bayes to text-only feature sets. Sudhakar and Kaliyamurthie \cite{sudhakar2024fake} benchmarked eight classifiers on a COVID-19 Twitter dataset of 1.37 million tweets, with SVM reaching 98\% accuracy while LSTM struggled at 65\% on short text. These studies collectively establish the upper bound of text-only approaches and motivate the move toward multimodal systems. 
+\subsection{Text-Image Fusion Systems}
+The second generation of misinformation detection systems incorporated images alongside text. Zhang et al. \cite{zhang2025multimodal} introduced a model that checks cross-modal consistency at word, phrase, and full-document levels, achieving 88--92\% across three standard datasets. Zhou et al. \cite{zhou2023mmfn} combined multiple feature streams, including text extracted from images via Optical Character Recognition (OCR), achieving 89--93\% across three datasets. MAGNet \cite{wang2025magnet} augmented text-image fusion with externally generated background knowledge via a language model, reporting an F1 score of 0.924 on the Weibo dataset. DEETSA \cite{huang2025deetsa} added web-based evidence retrieval to check whether text and image content mutually support each other, achieving approximately 92\% across two datasets with publicly available code. mEXACT \cite{roy2025mexact} introduced explainability into the pipeline, identifying which content features most influenced predictions and achieving 95.8\% and 93.4\% on two COVID-19 datasets. All five of these systems explicitly exclude video, with several noting it as a direction for future work \cite{zhang2025multimodal,roy2025mexact}. IBWO-CASC \cite{mu2025ibwocasc} reported 97.41\% accuracy using a nature-inspired optimisation approach to feature preparation, though its evaluation was conducted on a proprietary, non-public dataset, limiting its comparability to the broader literature. Attention-based methods have been increasingly used to capture interdependencies between modalities. Duwal et al. \cite{duwal2026evidence} proposed an evidence-grounded attention mechanism over graph neural networks for multimodal misinformation detection. Rout et al. \cite{rout2025towards} introduced a transformer-based architecture combining multi-head attention and dynamic position encoding for fake news detection. Yadav et al. \cite{yadav2023etma} proposed ETMA, which combines visual and text attention encoders with a joint attention learning module to capture interdependencies between modalities.
+\subsection{Video-Inclusive Systems}
+Only a small subset of recent work has attempted to process video content directly. YouRV \cite{kim2025yourv} proposed using algorithmically recommended companion videos as contextual evidence to detect fake news on YouTube, improving detection by 11.8\% over content-only approaches. However, video was treated as thumbnail and metadata only; no video stream analysis was performed, and no transformer models were used. MultiTec \cite{shang2025multitec} is the most technically advanced video pipeline reviewed. It analyses video frame by frame, transcribes speech using automatic speech recognition (ASR), and processes audio separately, fusing all three streams via a dual-attentive mechanism. It outperformed all comparison baselines by up to 6.9\% on its datasets. Its key limitation is that both datasets used are proprietary TikTok data focused exclusively on health misinformation, making it impossible to assess cross-domain or cross-platform generalisation. Liu et al. \cite{liu2024exploring} investigated the role of audio in multimodal misinformation detection, showing that audio features can provide complementary information when aligned with video through attention. Zhong et al. \cite{zhong2024vmid} proposed VMID, a multimodal LLM framework that converts video modalities to text for evaluation; however, this simplification discards temporal features that may be present in the original video stream. MAGE-fend \cite{hu2025magefend} introduced the frame difference method as a means of selecting semantically significant frames at points of maximum visual change, evaluated on Chinese short-video benchmarks. USAR \cite{yang2026unified} extended this line of work with the first object-to-segment-level hierarchical video analysis for misinformation, evaluated on a publicly available multi-domain benchmark. Although USAR demonstrated that segment-level analysis is viable, it does not report domain-disaggregated results, leaving open the question of whether performance is consistent across topics.
+\subsection{Base Framework and Datasets}
+FakingRecipe \cite{bu2024fakingrecipe} (Bu et al., ACM MM 2024) targets fake news detection on short TikTok-style videos by combining visual, speech and audio information through a cross-modal attention mechanism. Its code is publicly available and it is evaluated on a publicly available multi-domain dataset, making it the natural base for this study. FakeSV \cite{qi2023fakesv} (Qi et al., AAAI 2023) is a Chinese-language short video misinformation benchmark. Although it is not the main evaluation target for this study, SV-FEND, introduced alongside FakeSV, serves as a useful methodological comparison point.
+
+\subsection{Summary of Research Gaps}
+
+The reviewed literature demonstrates significant progress in text-based and text-image misinformation detection, while highlighting continuing challenges in representing and integrating temporal video information. Although frameworks such as FakingRecipe, MultiTec, MAGE-fend, and USAR incorporate video-related features, they differ in temporal modelling, fusion strategies, and evaluation settings. Consequently, the effectiveness of segment-aware processing and generalisation across topic domains remains an important area of investigation.
+
+Furthermore, while attention-based fusion has been explored, the contribution of each modality is not always isolated through comparable ablation experiments. These gaps motivated the two research components of this study: investigating segment-aware video processing and cross-domain performance, and evaluating the contributions of text, image, and temporal video information through controlled comparisons of concatenation-based and attention-based fusion. 
+
+Table~\ref{tab:gaps} summarises the primary gaps in the reviewed literature.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Gap summary across reviewed literature}
+    \label{tab:gaps}
+    \begin{tabular}{lcccc}
+        \toprule
+        \textbf{Paper} & \textbf{Video} & \textbf{Segment-level} & \textbf{Cross-domain} & \textbf{Public data} \\
+        \midrule
+        Capuano et al.~\cite{capuano2023content}   & \xmark   & \xmark & \xmark & \cmark \\
+        Zhang et al.~\cite{zhang2025multimodal}    & \xmark   & \xmark & \cmark & \cmark \\
+        MMFN~\cite{zhou2023mmfn}                   & \xmark   & \xmark & \cmark & \cmark \\
+        MAGNet~\cite{wang2025magnet}               & \xmark   & \xmark & \cmark & \cmark \\
+        DEETSA~\cite{huang2025deetsa}              & \xmark   & \xmark & \cmark & \cmark \\
+        mEXACT~\cite{roy2025mexact}                & \xmark   & \xmark & \xmark & \cmark \\
+        YouRV~\cite{kim2025yourv}                  & Partial  & \xmark & \xmark & \cmark \\
+        MultiTec~\cite{shang2025multitec}          & \cmark   & \xmark & \xmark & \xmark \\
+        USAR~\cite{yang2026unified}                & \cmark   & \cmark & \xmark & \cmark \\
+        FakingRecipe~\cite{bu2024fakingrecipe}     & \cmark   & \xmark & \cmark & \cmark \\
+        \midrule
+        \textbf{This study}                        & \cmark   & \cmark & \cmark & \cmark \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+  
+\section{Methodology}
+This study uses a quantitative, experimental approach structured around two complementary sub-problems. The first investigates whether segment-aware video processing improves cross-domain generalisation when adapted into an existing multimodal framework. The second investigates whether the composition of the modality and the fusion strategy influence the detection performance. Both sub-problems are evaluated on publicly available short video misinformation datasets using a consistent evaluation protocol, enabling direct comparison across experiments.
+
+\subsection{ Shared Dataset Criteria}
+Both sub-problems draw from publicly available short video misinformation datasets. Selection criteria are: (1) multi-domain coverage across at least two topic areas, (2) binary real/fake annotations at the video level, and (3) public availability without access restrictions that cannot be resolved within the project scope. The FakeSV dataset \cite{qi2023fakesv} is identified as the primary candidate. Where multiple suitable datasets exist, experiments may be conducted across both to strengthen generalisation.
+\subsection{Sub-problem1: Segment-AwareVideoFusion(u21572993)}
+FakingRecipe \cite{bu2024fakingrecipe} serves as the base framework. Its uniform frame-sampling strategy is replaced with a segment-aware pipeline using the frame difference method \cite{hu2025magefend}, which selects key-frames at points of significant pixel-wise visual change rather than at fixed intervals. The fusion mechanism and model architecture remain unchanged; only the key-frame selection strategy is modified. The adapted pipeline proceeds as follows:
+
+\begin{enumerate}
+    \item \textbf{Segment extraction:} The frame difference method computes pixel-wise differences between consecutive frames. Frames at local maxima of the difference signal are selected as segment boundaries and key-frames.
+    \item \textbf{Visual feature extraction:} Key-frames extracted per segment are encoded using a visual feature extractor to produce segment-level visual representations.
+    \item \textbf{Speech feature extraction:} Audio is transcribed per segment using ASR. Segment-level transcriptions are passed through a BERT (Bidirectional Encoder Representations from Transformers) model to obtain contextual textual representations.
+    \item \textbf{Acoustic feature extraction:} Acoustic features are extracted per segment using VGGish, capturing low-level audio characteristics independent of speech content.
+    \item \textbf{Fusion and classification:} Cross-modal attention fuses the visual, textual, and acoustic representations across segments. A binary classifier outputs a real or fake label for each video.
+\end{enumerate}
+
+Results are reported overall and disaggregated by topic domain to address RQ3. Baselines for comparison include the original FakingRecipe, USAR, and SV-FEND.
+
+\subsection{Sub-problem 2: Modality Ablation and Fusion Strategy Comparison (u25719302)}
+\label{sec:subproblem2_methodology}
+
+This sub-problem investigated how additional visual and temporal information affects short-video misinformation detection and whether cross-modal attention improves upon feature concatenation. Four models were developed incrementally: M1 (Text), M2 (Text + Image), M3 (Text + Image + Video), and M4 (Text + Image + Video with Cross-Modal Attention). Comparing M1 with M2 assessed the contribution of static images; M2 with M3 examined the addition of temporal video representations; and M3 with M4 evaluated alternative fusion strategies using the same input modalities. Preprocessing, data partitions, pretrained encoder families, optimisation procedures, and evaluation metrics were kept consistent where applicable to support meaningful comparisons.
+
+\subsubsection{Dataset and Preprocessing}
+\label{sec:sp2_dataset}
+
+Experiments used FakeTT, introduced in FakingRecipe \cite{bu2024fakingrecipe}, which provides short videos, textual descriptions, event identifiers, publication timestamps, and real/fake annotations. Real content was assigned label 0 and fake content label 1. After video validation and preprocessing, 1,924 samples were retained. A common manifest linked each sample to its text, label, event, timestamp, static image, and video frames, ensuring that all models received aligned inputs.
+
+\paragraph{Text preprocessing.}
+Text descriptions were normalised using Unicode NFKC, with non-printable characters removed and repeated whitespace collapsed. Descriptions were tokenised using the BERT-base uncased tokenizer, with a maximum sequence length of 128 tokens. Truncation and padding produced fixed-length inputs, while attention masks distinguished valid tokens from padding. BERT was selected to capture contextual linguistic information without manually engineered features.
+
+\paragraph{Image and video preprocessing.}
+Eight frames were sampled at approximately uniform positions across each video and stored chronologically as F00--F07. The fifth frame (F04) was selected as the representative static image, providing a consistent visual observation without relying exclusively on the beginning or end of a video.
+
+For models incorporating temporal information, F04 was excluded, leaving seven ordered video frames: F00--F03 and F05--F07. This prevented the exact static frame from being duplicated in the video input. All frames were converted to RGB and processed using the ViT-Base/16 image processor at $224\times224$ resolution.
+
+Uniform sampling provided temporal coverage and ensured identical video inputs for M3 and M4. Although this approach does not prioritise informative events, it allowed the fusion strategies to be compared without introducing different frame-selection methods.
+
+\subsubsection{Data Partitioning}
+\label{sec:sp2_splitting}
+
+Two evaluation protocols were implemented to examine model generalisation under different forms of data separation.
+
+\paragraph{Event-aware split.}
+Samples were grouped by event before partitioning, ensuring that an event appeared in only one partition. The resulting training, validation, and test sets contained 1,321, 305, and 298 samples, respectively. This prevented models from encountering the same event during training and testing, reducing the risk of event-specific information leakage.
+
+\paragraph{Chronological split.}
+Samples were ordered by publication timestamp and divided approximately 70/15/15 into 1,346 training, 289 validation, and 289 test samples. This protocol, motivated by the temporal evaluation used in FakingRecipe \cite{bu2024fakingrecipe}, examined whether patterns learned from earlier content remained effective on later content.
+
+The chronological split also introduced class-distribution changes: training contained 467 real and 879 fake samples, whereas testing contained 191 real and 98 fake samples. Chronological ordering was preserved without class-based resampling. Each of the four models was trained and evaluated separately under both protocols using identical samples within the respective partitions.
+
+\subsubsection{Feature Extraction and Transfer Learning}
+\label{sec:sp2_transfer_learning}
+
+Pretrained transformer encoders were adopted because the processed dataset was too small to train large text and vision models effectively from random initialisation. Partial fine-tuning allowed higher-level representations to adapt to misinformation detection while limiting computational requirements.
+
+\paragraph{Text encoder.}
+The pretrained BERT-base uncased model generated 768-dimensional contextual representations. Lower transformer layers were frozen, while the final four encoder layers were fine-tuned. M1--M3 used the \texttt{[CLS]} representation as a fixed-length text feature. M4 retained the full token sequence to support token-level cross-modal attention.
+
+\paragraph{Image encoder.}
+The pretrained ViT-Base/16 model (\texttt{google/vit-base-patch16-224}) extracted 768-dimensional visual representations. Its final four transformer blocks were fine-tuned while lower blocks remained frozen. M2 and M3 used the image \texttt{[CLS]} representation, whereas M4 retained the visual token sequence for cross-modal attention.
+
+\paragraph{Temporal video encoder.}
+Each of the seven video frames was independently encoded using ViT. The resulting 768-dimensional frame features were projected to 256 dimensions and combined with learnable temporal positional embeddings.
+
+A two-layer Transformer encoder with four attention heads, a feed-forward dimension of 512, GELU activation, and dropout of 0.1 then modelled relationships between the sampled frames. Positional embeddings preserved frame order, while self-attention enabled each frame to incorporate information from other temporal positions.
+
+M3 applied layer normalisation and mean pooling to produce a single 256-dimensional video representation. M4 retained the seven contextualised frame representations for attention-based fusion. Both models used the same temporal encoder architecture and sampled frames.
+
+\subsubsection{Model Architectures and Ablation Design}
+\label{sec:sp2_models}
+
+The four models were constructed to assess the effects of modality composition and fusion strategy.
+
+\paragraph{M1: Text-only baseline.}
+M1 established baseline performance using only the BERT \texttt{[CLS]} representation. Its classification head projected the 768-dimensional feature to 256 dimensions, followed by ReLU, dropout of 0.3, and a two-class output layer. This provided the reference against which additional modalities were evaluated.
+
+\paragraph{M2: Text-image concatenation.}
+M2 combined the 768-dimensional BERT representation with the 768-dimensional static-image ViT representation. Concatenation produced a 1,536-dimensional vector, which was projected to 256 dimensions before ReLU, dropout of 0.3, and binary classification.
+
+Concatenation was deliberately retained as a simple fusion mechanism so that comparison with M1 primarily assessed the contribution of static visual information.
+
+\paragraph{M3: Text-image-video concatenation.}
+M3 introduced the 256-dimensional pooled temporal video representation alongside the 768-dimensional text and image features. Concatenation produced a 1,792-dimensional vector, followed by projection to 256 dimensions, ReLU, dropout of 0.3, and two-class classification.
+
+The M2--M3 comparison assessed whether additional temporal observations improved classification when integrated through the same general concatenation strategy.
+
+\paragraph{M4: Cross-modal attention.}
+\label{sec:m4_architecture}
+
+M4 integrates text, image, and video representations through separate cross-modal attention mechanisms. The architecture is illustrated in
+Figure~\ref{fig:m4_architecture}.
+
+\input{M4_TikZ_architecture.tex}
+
+Unlike M3, which concatenates pooled modality representations, M4 retains contextual token representations to model relationships between textual, spatial, and temporal features. M4 used the same three input modalities as M3 but replaced pooled feature concatenation with explicit cross-modal interaction. The BERT token sequence, ViT visual token sequence, and Temporal Transformer frame sequence were each projected to a common 256-dimensional space, denoted by $H_T$, $H_I$, and $H_V$, respectively.
+
+Two multi-head cross-attention operations were performed. Text representations served as queries, while image and video representations supplied separate keys and values:
+
+\begin{equation}
+\begin{aligned}
+H_{TI} &= \mathrm{MHA}(H_T,H_I,H_I),\\
+H_{TV} &= \mathrm{MHA}(H_T,H_V,H_V).
+\end{aligned}
+\end{equation}
+
+Residual connections and layer normalisation produced image-aware and video-aware textual representations:
+
+\begin{equation}
+\begin{aligned}
+\hat{H}_{TI} &= \mathrm{LayerNorm}(H_T+H_{TI}),\\
+\hat{H}_{TV} &= \mathrm{LayerNorm}(H_T+H_{TV}).
+\end{aligned}
+\end{equation}
+
+The \texttt{[CLS]} representations from the original projected text sequence and both attended sequences were concatenated into a 768-dimensional vector. This was projected to 256 dimensions, followed by layer normalisation, GELU, dropout, and a binary classification head.
+
+Text was used as the attention query because the description provides the semantic context against which spatial and temporal visual evidence is integrated. Unlike M3, M4 could construct representations conditioned on individual visual tokens and temporal observations before classification.
+
+The M3--M4 comparison therefore examined an attention-based fusion design against pooled concatenation while holding the available raw modalities constant.
+
+\subsubsection{Training and Optimisation}
+\label{sec:sp2_training}
+
+All models were trained using cross-entropy loss and the AdamW optimiser with weight decay of 0.01. Different learning rates were used for pretrained and newly initialised components: $1\times10^{-5}$ for trainable BERT and ViT layers, and $1\times10^{-4}$ for projection, temporal, fusion, attention, and classification layers.
+
+The smaller backbone learning rate reduced disruption of pretrained representations, while the larger rate allowed newly introduced layers to learn task-specific features more quickly.
+
+Training lasted a maximum of eight epochs, with early stopping after three consecutive epochs without validation Macro-F1 improvement. A \texttt{ReduceLROnPlateau} scheduler reduced the learning rate by a factor of 0.5 when validation performance stopped improving, with a minimum of $1\times10^{-7}$. Gradient norms were clipped to 1.0.
+
+The checkpoint with the highest validation Macro-F1 was retained for final testing. Batch sizes reflected GPU memory requirements: 16 for M1, 8 for M2, and 4 for M3 and M4. The remaining optimisation settings were held constant across models.
+
+\subsubsection{Evaluation and Implementation}
+\label{sec:sp2_metrics}
+
+Models were evaluated using accuracy, precision, recall, F1-score, and Macro-F1. Fake content was treated as the positive class for precision, recall, and binary F1-score.
+
+Macro-F1 was selected as the primary metric because it assigns equal importance to real and fake classes, making it appropriate for the observed class imbalance:
+
+\begin{equation}
+\mathrm{Macro\mbox{-}F1}
+=
+\frac{F1_{\mathrm{Real}}+F1_{\mathrm{Fake}}}{2}.
+\end{equation}
+
+Training samples were used for parameter optimisation, validation samples for scheduling, early stopping, and checkpoint selection, and test samples for final performance evaluation.
+
+The models were implemented using PyTorch and Hugging Face Transformers, with Scikit-learn used for partitioning and evaluation. GPU-accelerated training was conducted in Google Colab. Processed manifests, extracted frames, and model checkpoints were stored in Google Drive to maintain consistent inputs across experiments.
+
+\subsubsection{Exploratory Fusion Refinement}
+\label{sec:sp2_gating_method}
+
+Following the primary M1--M4 experiments, two exploratory gating variants of M4 were investigated. The objective was to determine whether sample-dependent weighting of textual, image-aware, and video-aware representations could improve fusion.
+
+A gating network received the concatenation of the three 256-dimensional representations and generated three softmax-normalised weights:
+
+\begin{equation}
+[g_T,g_I,g_V]
+=
+\mathrm{softmax}
+\left(f_{\mathrm{gate}}
+([h_T;h_{TI};h_{TV}])\right).
+\end{equation}
+
+The first variant used weighted summation:
+
+\begin{equation}
+h_G=g_Th_T+g_Ih_{TI}+g_Vh_{TV}.
+\end{equation}
+
+The second variant used gated concatenation:
+
+\begin{equation}
+h_G=[g_Th_T;\,g_Ih_{TI};\,g_Vh_{TV}].
+\end{equation}
+
+Weighted summation produced a 256-dimensional representation, whereas gated concatenation preserved separate modality-specific feature dimensions in a 768-dimensional representation. Both were subsequently processed by fusion and classification layers.
+
+These variants were evaluated separately from the primary ablation because they were developed after the original M4 experiments.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Sub-problem 2: Modality Ablation and Fusion Strategy Comparison (u25719302)}
+\label{sec:sp2_results}
+
+Four models were evaluated on the FakeTT dataset using event-aware and chronological splits. The event-aware test set contained 298 samples (112 real, 186 fake), while the chronological test set contained 289 samples (191 real, 98 fake). Macro-F1 was the primary evaluation metric, with accuracy, precision, recall, and F1-score also reported. Precision, recall, and F1-score refer to the fake class.
+
+\begin{table}[htbp]
+\centering
+\caption{Model performance under event-aware and chronological evaluation.}
+\label{tab:sp2_overall_results}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccccc}
+\toprule
+\textbf{Split} & \textbf{Model} & \textbf{Accuracy} &
+\textbf{Precision} & \textbf{Recall} & \textbf{F1} &
+\textbf{Macro-F1} \\
+\midrule
+
+Event-aware & M1: Text
+& 0.7450 & 0.7806 & 0.8226 & 0.8010 & 0.7230 \\
+
+Event-aware & M2: Text + Image
+& \textbf{0.7550} & 0.8021 & 0.8065 & 0.8043
+& \textbf{0.7385} \\
+
+Event-aware & M3: Text + Image + Video
+& 0.7248 & \textbf{0.8291} & 0.7043 & 0.7616
+& 0.7181 \\
+
+Event-aware & M4: Cross-Attention
+& 0.7517 & 0.7857 & \textbf{0.8280}
+& \textbf{0.8063} & 0.7302 \\
+
+\midrule
+
+Chronological & M1: Text
+& 0.7612 & 0.6074 & \textbf{0.8367}
+& 0.7039 & 0.7519 \\
+
+Chronological & M2: Text + Image
+& \textbf{0.7924} & 0.6557 & 0.8163
+& \textbf{0.7273} & \textbf{0.7798} \\
+
+Chronological & M3: Text + Image + Video
+& 0.7855 & \textbf{0.6636} & 0.7449
+& 0.7019 & 0.7672 \\
+
+Chronological & M4: Cross-Attention
+& 0.7820 & 0.6496 & 0.7755
+& 0.7070 & 0.7667 \\
+
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\subsubsection{Modality Ablation}
+
+As shown in Table~\ref{tab:sp2_overall_results}, adding a representative static image (M2) improved Macro-F1 over the text-only baseline (M1) by 0.0155 under event-aware evaluation and 0.0279 under chronological evaluation. M2 achieved the highest Macro-F1 across both protocols.
+
+However, incorporating seven video frames through a Temporal Transformer and concatenation (M3) reduced Macro-F1 relative to M2 by 0.0204 and 0.0127, respectively. Fake-class recall also decreased under both protocols, indicating that the additional video representation did not improve the evaluated concatenation-based model.
+
+\subsubsection{Fusion Strategy Comparison}
+
+Replacing pooled feature concatenation (M3) with cross-modal attention (M4) increased event-aware Macro-F1 from 0.7181 to 0.7302. Fake-class recall increased from 0.7043 to 0.8280, while fake-class F1 increased from 0.7616 to 0.8063. Under chronological evaluation, M3 and M4 achieved nearly identical Macro-F1 scores of 0.7672 and 0.7667, respectively. Thus, attention-based fusion improved event-aware performance but did not consistently outperform concatenation across both protocols.
+
+\subsubsection{Exploratory Gated Fusion}
+
+Additional experiments investigated weighted-sum and gated-concatenation variants of M4. Weighted-sum gating achieved Macro-F1 scores of 0.7261 (event-aware) and 0.7360 (chronological), below the original M4 scores of 0.7302 and 0.7667. Gated concatenation achieved an event-aware Macro-F1 of 0.7363, slightly improving upon the original M4 but remaining below M2 (0.7385). Chronological evaluation of gated concatenation was not completed.
+
+Overall, M2 achieved the strongest Macro-F1 across both evaluation protocols. Adding video through concatenation reduced performance, while cross-modal attention provided an improvement only under event-aware evaluation.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{Sub-problem 2: Modality Ablation and Fusion Strategy Comparison (u25719302)}
+\label{sec:sp2_discussion}
+
+The experiments demonstrate that adding modalities does not necessarily improve misinformation detection. The text-image model (M2) consistently achieved the highest Macro-F1 under both event-aware (0.7385) and chronological (0.7798) evaluation, outperforming the text-only baseline (M1). This suggests that the representative static image provided complementary visual information not fully captured by textual descriptions. However, the experiments did not establish which specific visual features contributed to this improvement.
+
+\subsubsection{Contribution of Temporal Video Information}
+
+Adding temporal video information through concatenation (M3) reduced Macro-F1 from 0.7385 to 0.7181 under event-aware evaluation and from 0.7798 to 0.7672 under chronological evaluation. Several factors may explain this reduction. Uniform frame sampling may have overlooked short but informative events while selecting visually redundant frames. Furthermore, concatenation does not explicitly model relationships between textual descriptions and individual visual observations. The increased complexity of the video architecture, combined with the relatively small dataset, may also have affected optimisation. These explanations remain hypotheses because their individual effects were not isolated experimentally. Therefore, the results do not imply that video information is inherently ineffective, but rather that the implemented temporal representation and concatenation strategy did not provide additional benefits.
+
+\subsubsection{Effectiveness of Cross-Modal Attention}
+
+Cross-modal attention (M4) improved event-aware Macro-F1 from 0.7181 for M3 to 0.7302, while fake-class recall increased from 0.7043 to 0.8280. This suggests that allowing textual representations to attend to spatial and temporal visual features may support more effective cross-modal integration than concatenating pooled representations. However, M4 remained below M2, and chronological Macro-F1 was nearly identical for M3 (0.7672) and M4 (0.7667). Thus, cross-modal attention provided a benefit under event-aware evaluation but not consistently across both protocols. Since M3 and M4 also differed in their representation aggregation, the improvement cannot be attributed exclusively to the attention operation.
+
+\subsubsection{Generalisation and Exploratory Gating}
+
+The event-aware protocol evaluated unseen events, whereas the chronological protocol evaluated later-published content. Although all models achieved higher Macro-F1 chronologically, differences in test composition and class distribution prevent concluding that temporal generalisation was easier. Nevertheless, M2 remained the best model under both protocols. Exploratory weighted-sum gating reduced M4 performance, whereas gated concatenation improved event-aware Macro-F1 from 0.7302 to 0.7363. This suggests that preserving modality-specific representations may be preferable to compressing them through weighted summation. However, the improvement was small and chronological evaluation of gated concatenation was not tested due to computational constraints.
+
+\subsubsection{Research Question Outcomes}
+
+Regarding RQ4, incorporating static image information consistently improved performance over text alone, whereas adding uniformly sampled temporal video information through concatenation did not improve upon text-image fusion. Regarding RQ5, cross-modal attention improved trimodal performance under event-aware evaluation but offered no Macro-F1 advantage under chronological evaluation. Overall, the findings indicate that successful multimodal misinformation detection depends on the relevance of extracted visual information and the effectiveness of its integration, rather than simply increasing the number of modalities.
+
+\section{Conclusion}
+
+This study evaluated the contribution of text, image, and video modalities and compared concatenation-based fusion with cross-modal attention for short-video misinformation detection. Experiments on FakeTT demonstrated that text-image fusion achieved the highest Macro-F1 under both event-aware (0.7385) and chronological (0.7798) evaluation. Adding temporal video information through concatenation reduced performance, while cross-modal attention improved trimodal fusion under event-aware evaluation but not chronological evaluation. These findings demonstrate that additional modalities do not necessarily improve misinformation detection; rather, performance depends on the relevance of extracted information and the effectiveness of multimodal fusion. The study was limited by the small dataset, uniform frame sampling, excluded audio for the subproblem, computational constraints; future work should explore segment-aware sampling, additional modalities, and adaptive fusion.
+
+%===============================
+
+\bibliographystyle{IEEEtran}
+\bibliography{references} %change the name here to the name of your .bib file
+
+\end{document}
+
+
