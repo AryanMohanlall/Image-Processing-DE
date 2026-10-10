@@ -19,9 +19,8 @@
 
 \journal{Expert Systems with Applications}
 
-%% ESWA APA referencing style
-\bibliographystyle{model5-names}
-\biboptions{authoryear}
+\bibliographystyle{ieeetr}
+\bibliography{references}
 
 \begin{document}
 
@@ -396,19 +395,33 @@ The baseline algorithm uses the DE/rand/1/bin strategy.
 
 
 \subsection{JADE}
+\label{sec:jade}
 
-JADE extends conventional DE through adaptive control parameters and
-the current-to-$p$best mutation strategy.
+JADE follows the adaptive DE/current-to-$p$best/1 mechanism introduced by Zhang and Sanderson \citep{zhang2009jade}. In the original JADE formulation, the mutant vector for target $\mathbf{x}_{i,g}$ is
+\begin{equation}
+\mathbf{v}_{i,g}
+=
+\mathbf{x}_{i,g}
++ F_i(\mathbf{x}_{pbest,g}-\mathbf{x}_{i,g})
++ F_i(\mathbf{x}_{r_1,g}-\mathbf{x}_{r_2,g}).
+\end{equation}
+For this project, the same current-to-$p$best/1 strategy is used, but the vectors are threshold candidates rather than unconstrained real-valued design variables. The index $pbest$ is sampled uniformly from the top $\lceil p N_P \rceil$ parent candidates, where $p=0.05$ and $N_P=50$ in the JADE runs. The index $r_1$ is selected from the current parent population, excluding the target. The second donor index $r_2$ is selected uniformly from the union of the parent population and the external archive, excluding the target and the $r_1$ population index. This distinction matters because the original JADE algorithm is adaptive and archive-based, whereas the project-specific threshold representation is handled separately by the shared segmentation decoder and clipping rules.
 
-% TODO:
-% Explain:
-% - DE/current-to-pbest/1
-% - p-best selection
-% - adaptive F
-% - adaptive CR
-% - external archive if enabled
-% - parameter values
+Within each generation, the parent population and the corresponding fitness values are frozen before mutation and trial evaluation. Accepted offspring are stored in a separate next-generation population and are committed only at the end of the generation; this also applies to the final partial generation when the evaluation budget is exhausted. The archive stores displaced parents immediately after a strict improvement, and, if the archive exceeds $N_P$ entries at generation end, it is randomly trimmed back to a maximum of $N_P$ solutions. This is consistent with the project implementation used here and differs from an in-place update strategy that would overwrite parents during the generation.
 
+Binomial crossover is then applied to each target vector with a mandatory mutant component, ensuring that at least one dimension is inherited from the mutant. The objective functions are maximised, so only strictly higher fitness values are accepted; equal or lower fitness values do not replace the parent. Control parameters are sampled as in JADE: $CR_i \sim \mathcal{N}(\mu_{CR}, 0.1)$, clipped to $[0,1]$, and $F_i \sim \mathcal{C}(\mu_F, 0.1)$ with non-positive or non-finite values resampled and values above one capped at one. The successful parameter sets update the adaptation means as
+\begin{align}
+\mu_{CR} &\leftarrow
+(1-c)\mu_{CR}+c\,\operatorname{mean}(S_{CR}),\\
+\mu_F &\leftarrow
+(1-c)\mu_F+
+ c\,\frac{\sum_{F\in S_F}F^2}{\sum_{F\in S_F}F},
+\end{align}
+where the second update is the Lehmer mean of successful mutation factors. If no successful trial is found in a generation, the means remain unchanged.
+
+After mutation and crossover, each real-valued threshold vector is transformed to an integer threshold set using the shared implementation in \texttt{src/segmentation.py}. The project decoder rounds to the nearest integer, clips every threshold into the valid range $[1,254]$, and then enforces a strictly increasing set of threshold values by pushing each component upward to at least the lower bound for that position and pushing it downward to respect the upper bound implied by later thresholds. This yields valid, ordered integer thresholds that conform to the project segmentation code and are not equivalent to unconstrained mutation in the original JADE paper. Mutants that fall outside the threshold bounds are clipped before decoding, and the final integer threshold vector is used in the objective evaluation.
+
+The FE budget follows the project implementation exactly: the initial population evaluation consumes $N_P$ evaluations, and every evaluated trial thereafter increments the objective budget. The optimiser stops once the budget is reached, including the final partial generation when a generation is terminated by the evaluation cap. The total experimental configuration for JADE is $N_P=50$, $p=0.05$, $c=0.1$, initial $\mu_F=\mu_{CR}=0.5$, archive enabled with capacity 50, bounds $[1,254]$, 30 independent runs, 30,000 function evaluations including initialisation, and four workers.
 
 \subsection{SHADE}
 
@@ -545,35 +558,58 @@ $3,5,7,9,11,12$ \\
 Independent runs &
 30 \\
 
-Maximum function evaluations &
-\textit{[Insert value]} \\
-
-Population size &
-\textit{[Insert value / algorithm-specific]} \\
-
-Tsallis $q$ &
-\textit{[Insert value, e.g. 0.8]} \\
-
-DE $F$ &
-\textit{[Insert value]} \\
-
-DE $CR$ &
-\textit{[Insert value]} \\
+JADE population size &
+50 \\
 
 JADE $p$ &
-\textit{[Insert value]} \\
+0.05 (three p-best candidates) \\
 
-SHADE memory size &
-\textit{[Insert value]} \\
+JADE adaptation rate $c$ &
+0.1 \\
 
-LADE history length &
-\textit{[Insert value]} \\
+JADE initial $\mu_F$, $\mu_{CR}$ &
+0.5, 0.5 \\
+
+JADE sampling scale for $F$ &
+0.1 (Cauchy distribution) \\
+
+JADE sampling standard deviation for $CR$ &
+0.1 (normal distribution) \\
+
+JADE external archive &
+Enabled; maximum 50 solutions \\
+
+JADE threshold bounds &
+$[1,254]$ \\
+
+JADE mutant boundary handling &
+Clipping \\
+
+JADE initialisation evaluations &
+50, included in the total budget \\
+
+Maximum function evaluations &
+30,000 per run, including initialisation \\
+
+Tsallis $q$ &
+0.8 \\
+
+Parallel workers for JADE experiments &
+4 \\
 
 Independent random seeds &
-\textit{[Describe procedure]} \\
+Deterministic seeds derived from each task and run \\
 
 \bottomrule
 \end{tabular}
+
+For the JADE experiments, random seeds were generated
+deterministically using an eight-byte BLAKE2b digest of
+the base seed, image identifier, objective, threshold count
+and run index, reduced modulo $2^{32}$. The base seed was
+\texttt{0xC05791}. Initial population evaluation consumed
+50 of the 30,000 objective-function evaluations permitted
+per run.
 
 \end{table}
 
@@ -703,6 +739,10 @@ each optimisation algorithm as dimensionality increases.
 % =========================================================
 % 6. EXPERIMENT 1 -- BSD500
 % =========================================================
+
+% JADE tables, figures and numerical discussion must be regenerated
+% after rerunning the corrected implementation. Existing JADE values
+% describe the previous implementation.
 
 \section{Experiment 1: BSD500 Benchmark Images}
 
@@ -1366,6 +1406,6 @@ submission repository.
 % REFERENCES
 % =========================================================
 
-\bibliography{sample}
+\bibliography{references}
 
 \end{document}
