@@ -6,11 +6,7 @@ from collections.abc import Callable
 
 import numpy as np
 
-# from src.segmentation import LEVELS, MAX_THRESHOLD, MIN_THRESHOLD
-
-LEVELS        = 256
-MIN_THRESHOLD = 1
-MAX_THRESHOLD = 254
+from src.segmentation import LEVELS, MAX_THRESHOLD, MIN_THRESHOLD
 
 OBJECTIVE_NAMES: tuple[str, ...] = ("otsu", "kapur", "tsallis")
 

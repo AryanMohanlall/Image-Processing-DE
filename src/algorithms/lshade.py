@@ -2,7 +2,11 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 
+<<<<<<< HEAD
 from .shade import SHADE
+=======
+from .shade import SHADE
+>>>>>>> c8d9b8c9413939b90bd238426cd6e87dbba1b850
  
 class LSHADE(SHADE):
     name = "L-SHADE"
@@ -32,4 +36,8 @@ class LSHADE(SHADE):
  
     def _generation(self, rng):
         super()._generation(rng)
+<<<<<<< HEAD
         self._shrink_population()
+=======
+        self._shrink_population()
+>>>>>>> c8d9b8c9413939b90bd238426cd6e87dbba1b850

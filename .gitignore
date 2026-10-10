@@ -25,3 +25,7 @@ tests/*.py
 # OS
 .DS_Store
 Thumbs.db
+
+
+results/curves/
+*.egg-info/
