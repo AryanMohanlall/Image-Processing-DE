@@ -1,0 +1,42 @@
+{
+  "finished_utc": "2026-10-11T07:25:56.933566+00:00",
+  "sources": [
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp1_standardDE",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp1_late_acceptance_de",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp1_jade",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp1_shade_lshade_v2",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp2_standardDE",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp2_lateAcceptanceDE",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp2_jade",
+    "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\exp2_shade_lshade_v2"
+  ],
+  "output": "C:\\Users\\Aryan\\Documents\\Personal\\Image-Processing-DE\\results\\final_analysis",
+  "metric": "best_fitness",
+  "rows_ok": 67500,
+  "datasets": [
+    "bsd500",
+    "chaos"
+  ],
+  "algorithms": [
+    "jade",
+    "late_acceptance_de",
+    "lshade",
+    "shade",
+    "standard_de"
+  ],
+  "objectives": [
+    "kapur",
+    "otsu",
+    "tsallis"
+  ],
+  "k_values": [
+    3,
+    5,
+    7,
+    9,
+    11,
+    12
+  ],
+  "figures": true,
+  "convergence": false
+}

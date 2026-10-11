@@ -3,6 +3,7 @@
 Run from the repository root: python -m experiments.report_exp1
 """
 
+import argparse
 from pathlib import Path
 import warnings
 
@@ -20,12 +21,20 @@ SOURCES = {
     "standard_de": ROOT / "results/exp1_standardDE",
     "late_acceptance_de": ROOT / "results/exp1_late_acceptance_de",
     "jade": ROOT / "results/exp1_jade",
+    "shade": ROOT / "results/exp1_shade_lshade_v2",
+    "lshade": ROOT / "results/exp1_shade_lshade_v2",
 }
-LABELS = {"standard_de": "DE", "late_acceptance_de": "LADE", "jade": "JADE"}
+LABELS = {
+    "standard_de": "DE", "late_acceptance_de": "LADE", "jade": "JADE",
+    "shade": "SHADE", "lshade": "L-SHADE",
+}
 OBJECTIVES = ("otsu", "kapur", "tsallis")
 KS = (3, 5, 7, 9, 11, 12)
 METRICS = {"psnr": "PSNR (dB)", "ssim": "SSIM", "uniformity": "Uniformity"}
-COLOURS = {"standard_de": "#4C72B0", "late_acceptance_de": "#8172B3","jade": "#55A868"}
+COLOURS = {
+    "standard_de": "#4C72B0", "late_acceptance_de": "#8172B3",
+    "jade": "#55A868", "shade": "#C44E52", "lshade": "#DD8452",
+}
 
 
 def load_results():
@@ -33,7 +42,7 @@ def load_results():
     keys = ["image_id", "objective", "k"]
 
     for algorithm, root in SOURCES.items():
-        paths = sorted((root / "raw").rglob("*.parquet"))
+        paths = sorted((root / "raw" / "bsd500" / algorithm).rglob("*.parquet"))
         assert len(paths) == 180, (
             algorithm, f"expected 180 result files, found {len(paths)}"
         )
@@ -179,9 +188,9 @@ def section_tex(table, frame):
         return lookup.loc[(algorithm, objective, k), metric + "_mean"]
     text = [r"\section{Experiment 1: BSD500 Benchmark Images}", r"\label{sec:experiment1}",
             r"\subsection{Experimental Objective and Completed Runs}",
-            "This section reports the completed Standard DE (DE), Late Acceptance DE (LADE) "
-            "and JADE experiments on the ten supplied BSD500 images. Results for SHADE "
-            "and L-SHADE are not included in this comparison. Each algorithm was evaluated with Otsu, Kapur "
+            "This section reports the completed Standard DE (DE), Late Acceptance DE (LADE), "
+            "JADE, SHADE and L-SHADE experiments on the ten supplied BSD500 images. "
+            "Each algorithm was evaluated with Otsu, Kapur "
             "and Tsallis ($q=0.8$) at $K\\in\\{3,5,7,9,11,12\\}$, using 30 runs per combination "
             "and a budget of 30,000 function evaluations, including initialisation. The saved "
             f"results contain 5,400 successful runs per algorithm ({len(frame):,} in total); every run "
@@ -200,7 +209,7 @@ def section_tex(table, frame):
         for metric in METRICS:
             text.append(table_tex(table, objective, metric))
     text += [r"\clearpage", r"\subsection{Effect of Threshold Level}",
-             "Mean PSNR and SSIM increase from $K=3$ to $K=12$ for for DE and LADE algorithms under "
+             "Mean PSNR and SSIM generally increase from $K=3$ to $K=12$ across the five algorithms under "
              "all three objectives. More thresholds permit finer intensity reconstruction, "
              "although gains diminish at higher $K$. For DE with Otsu, mean PSNR increases "
              f"from {value('standard_de','otsu',3,'psnr'):.4f} to "
@@ -212,7 +221,7 @@ def section_tex(table, frame):
              "This metric includes an explicit factor of $K$, so improved PSNR does not guarantee "
              "a larger uniformity score.",
              r"\subsection{Effect of Objective Function}",
-             "Otsu gives the highest mean PSNR and uniformity for for DE and LADE algorithms at every "
+             "Otsu generally gives the strongest reconstruction metrics across the five algorithms over the "
              "tested threshold count. Otsu also gives the highest mean SSIM at every "
              "tested threshold count. For DE at $K=12$, the mean PSNR values are "
              f"{value('standard_de','otsu',12,'psnr'):.4f}, "
@@ -239,8 +248,7 @@ def section_tex(table, frame):
         text += [r"\begin{figure}[htbp]", r"\centering",
                  f"\\includegraphics[width=0.9\\textwidth]{{exp1_segmentation_{objective}.png}}",
                  f"\\caption{{Original and segmented img1 under {objective.title()} at "
-                 "$K=3,7,12$. DE occupies the first row, LADE the second . Each solution "
-                 "and JADE the third. Each solution "
+                 "$K=3,7,12$. Rows show DE, LADE, JADE, SHADE and L-SHADE, respectively. Each solution "
                  "is selected by fitness closest to the median of its 30 runs (ties use "
                  "the lowest run index). Class intensities are spread evenly for display; "
                  "PSNR and SSIM are computed using class means instead.}",
@@ -259,8 +267,8 @@ def section_tex(table, frame):
              "The saved results do not record hardware or worker counts, so runtime differences "
              "cannot be attributed exclusively to algorithm design.",
              r"\subsection{Discussion of Experiment 1}",
-             "Neither DE nor LADE consistently dominates the reconstruction metrics "
-             "in their pairwise comparison. DE has "
+             "Across the five algorithms, descriptive differences depend on the objective and threshold count. "
+             "For the DE--LADE comparison, DE has "
              "slightly higher mean Otsu PSNR from $K=7$ through $K=12$, whereas LADE has "
              "higher mean Kapur PSNR at $K=5,9,11,12$. At $K=12$, LADE exceeds DE's "
              "Kapur PSNR by "
@@ -272,13 +280,16 @@ def section_tex(table, frame):
              "parameters and changes selection through a best-per-history-slot policy; "
              "this policy should be considered when interpreting the comparison. "
              "The experiment supports the expected improvement in reconstruction with more "
-             "thresholds and shows a stronger descriptive effect of objective choice than "
-             "of switching between these two optimisers. Full group conclusions require "
-             "the remaining algorithms, paired statistical analysis and the MRI experiment."]
+             "thresholds and shows that objective choice can have a stronger descriptive effect than "
+             "switching optimisers. Claims of algorithmic superiority require the paired statistical analysis."]
     return "\n\n".join(text) + "\n\n"
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--tex", type=Path, default=ROOT / "temp.tex")
+    args = parser.parse_args(argv)
+
     frame = load_results()
     (ROOT / "figures").mkdir(exist_ok=True)
     (ROOT / "report").mkdir(exist_ok=True)
@@ -287,7 +298,7 @@ def main():
     pooled.to_csv(ROOT / "report/exp1_pooled_summary.csv", index=False)
     per_image.to_csv(ROOT / "report/exp1_per_image_summary.csv", index=False)
     figures(frame)
-    path = ROOT / "temp.tex"
+    path = args.tex.resolve()
     tex = path.read_text(encoding="utf-8")
     tex = tex.removeprefix("```latex\n").rstrip().removesuffix("```").rstrip() + "\n"
     if r"\usepackage{graphicx}" not in tex:
@@ -296,7 +307,7 @@ def main():
     end = tex.index(r"\section{Experiment 2: CHAOS MRI Images}")
     tex = tex[:start] + section_tex(pooled, frame) + tex[end:]
     path.write_text(tex, encoding="utf-8") 
-    print(f"Validated {len(frame):,} runs; ""populated Experiment 1 in temp.tex.")
+    print(f"Validated {len(frame):,} runs; populated Experiment 1 in {path}.")
     print("Wrote five PNG figures at 300 DPI and pooled/per-image summary CSVs.")
 
 
