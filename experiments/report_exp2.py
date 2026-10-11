@@ -17,7 +17,13 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCES = {"jade": ROOT / "results/exp2_jade"}
+SOURCES = {
+    "standard_de": ROOT / "results/exp2_standardDE",
+    "late_acceptance_de": ROOT / "results/exp2_lateAcceptanceDE",
+    "jade": ROOT / "results/exp2_jade",
+    "shade": ROOT / "results/exp2_shade_lshade_v2",
+    "lshade": ROOT / "results/exp2_shade_lshade_v2",
+}
 LABELS = {"standard_de": "DE", "jade": "JADE", "shade": "SHADE",
           "lshade": "L-SHADE", "late_acceptance_de": "LADE"}
 COLOURS = {"standard_de": "#4C72B0", "jade": "#55A868", "shade": "#C44E52",
@@ -222,7 +228,13 @@ def section_tex(table, frame, sources, metrics, image_id, gt_description):
             f"Each image--objective--threshold combination contains {n_runs} runs "
             f"with {budget:,} function evaluations per run.",
             r"\subsection{Ground-Truth Mask Matching}",
-            escape_tex(gt_description) if gt_description else "--",
+            escape_tex(gt_description) if gt_description else (
+                "The supplied CHAOS subset contains MRI slices but no corresponding "
+                "anatomical ground-truth masks. Dice and Jaccard coefficients and "
+                "automatic matching of threshold classes to a target organ therefore "
+                "cannot be computed; reconstruction quality and unsupervised class "
+                "separability are reported instead."
+            ),
             r"\subsection{Reconstruction Metrics}",
             "Tables report pooled means and sample standard deviations across images "
             "and runs. Dashes indicate unavailable results."]
@@ -230,10 +242,16 @@ def section_tex(table, frame, sources, metrics, image_id, gt_description):
         for metric, label in metrics.items():
             if metric not in ("dice", "jaccard"):
                 text.append(table_tex(table, objective, metric, label))
-    text.append(r"\subsection{Ground-Truth Segmentation Performance}")
-    for objective in OBJECTIVES:
-        for metric, label in [("dice", "Dice coefficient"), ("jaccard", "Jaccard index")]:
-            text.append(table_tex(table, objective, metric, label))
+    overlap_metrics = [
+        (metric, label) for metric, label in
+        [("dice", "Dice coefficient"), ("jaccard", "Jaccard index")]
+        if metric in metrics
+    ]
+    if overlap_metrics:
+        text.append(r"\subsection{Ground-Truth Segmentation Performance}")
+        for objective in OBJECTIVES:
+            for metric, label in overlap_metrics:
+                text.append(table_tex(table, objective, metric, label))
     text.append(r"\subsection{Visual MRI Segmentation Results}")
     for objective in OBJECTIVES:
         text.append(figure_tex(f"exp2_segmentation_{objective}.png",
@@ -252,7 +270,13 @@ def section_tex(table, frame, sources, metrics, image_id, gt_description):
              "Mean recorded optimisation time versus $K$, with sample standard deviation "
              "as error bars, pooled across images, objectives and runs.",
              "fig:chaos-runtime"),
-             r"\subsection{Discussion of Experiment 2}", "--"]
+             r"\subsection{Discussion of Experiment 2}",
+             "Across the five algorithms, reconstruction quality generally improves "
+             "as the number of thresholds increases. Otsu and Kapur usually produce "
+             "stronger reconstruction metrics than Tsallis at the fixed value "
+             "$q=0.8$. Differences between algorithms depend on the objective and "
+             "threshold count, so the pooled means should be interpreted alongside "
+             "the paired statistical tests rather than as evidence of significance."]
     return "\n\n".join(text) + "\n\n"
 
 
