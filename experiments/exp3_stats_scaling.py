@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from collections.abc import Iterator
+from datetime import datetime, timezone
+import json
 from pathlib import Path
+import sys
 
 import pandas as pd
 
@@ -20,10 +22,19 @@ MIN_FRIEDMAN_ALGORITHMS = 3
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
 
-    frame = collect(args.results)
-    if frame.empty:
+    roots = args.source or [args.results]
+    frames = [collect(root) for root in roots]
+    nonempty = [part for part in frames if not part.empty]
+    if not nonempty:
         print("no results found -- run exp1_bsd500.py and exp2_chaos.py first")
         return 1
+    frame = pd.concat(nonempty, ignore_index=True)
+    identity = ["dataset", "image_id", "objective", "k", "algorithm", "run"]
+    duplicates = frame.duplicated(identity, keep=False)
+    if duplicates.any():
+        raise ValueError(
+            f"combined sources contain {int(duplicates.sum())} duplicate result rows"
+        )
     frame = frame[frame.status == "ok"]
     tables = tables_dir(args.results)
 
@@ -31,8 +42,10 @@ def main(argv: list[str] | None = None) -> int:
     write_friedman(frame, args.metric, args.results, args.figures)
     if args.figures:
         plot_scalability(frame, args.results)
-        plot_convergence(frame, args.results)
+        if args.convergence:
+            plot_convergence(frame, args.results)
     write_timing(frame, tables)
+    write_manifest(frame, args, roots)
 
     print(f"wrote statistics and figures under {args.results}")
     return 0
@@ -41,10 +54,18 @@ def main(argv: list[str] | None = None) -> int:
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--results", type=Path, default=RESULTS_ROOT)
+    parser.add_argument(
+        "--source", type=Path, action="append",
+        help="result root to combine; repeat for each separately stored sweep",
+    )
     parser.add_argument("--metric", default="best_fitness")
     parser.add_argument(
         "--figures", action=argparse.BooleanOptionalAction, default=True,
         help="render the critical-difference, scalability and convergence figures",
+    )
+    parser.add_argument(
+        "--convergence", action=argparse.BooleanOptionalAction, default=True,
+        help="render convergence figures (requires curves under --results)",
     )
     return parser.parse_args(argv)
 
@@ -155,6 +176,25 @@ def write_timing(frame: pd.DataFrame, tables: Path) -> None:
         .reset_index()
     )
     timing.to_csv(tables / "scalability_timing.csv", index=False)
+
+
+def write_manifest(frame: pd.DataFrame, args: argparse.Namespace, roots: list[Path]) -> None:
+    payload = {
+        "finished_utc": datetime.now(timezone.utc).isoformat(),
+        "sources": [str(root.resolve()) for root in roots],
+        "output": str(args.results.resolve()),
+        "metric": args.metric,
+        "rows_ok": int(len(frame)),
+        "datasets": sorted(frame.dataset.unique().tolist()),
+        "algorithms": sorted(frame.algorithm.unique().tolist()),
+        "objectives": sorted(frame.objective.unique().tolist()),
+        "k_values": sorted(int(value) for value in frame.k.unique()),
+        "figures": bool(args.figures),
+        "convergence": bool(args.convergence),
+    }
+    (args.results / "analysis_manifest.json").write_text(
+        json.dumps(payload, indent=2), encoding="utf-8"
+    )
 
 
 def figure_path(results: Path, category: str, filename: str) -> Path:

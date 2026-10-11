@@ -76,8 +76,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
         "--stats",
-        action="store_true",
-        help="also run Experiment 3 (statistics, convergence, scalability)",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="run Experiment 3 after both sweeps (default: enabled)",
     )
     parser.add_argument("--runs", type=int, default=N_RUNS)
     parser.add_argument("--max-evaluations", type=int, default=MAX_EVALUATIONS)
