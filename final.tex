@@ -1,4 +1,5 @@
-\documentclass[review]{elsarticle}
+\documentclass[review,authoryear]{elsarticle}
+% \documentclass[review]{elsarticle}
 
 \graphicspath{{./figures/}}
 
@@ -6,7 +7,6 @@
 \usepackage{hyperref}
 \usepackage{float}
 \usepackage{verbatim}
-\usepackage{apalike}
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{booktabs}
@@ -17,11 +17,14 @@
 \floatstyle{plaintop}
 \restylefloat{table}
 
-\journal{Expert Systems with Applications}
+% \journal{Expert Systems with Applications}
+% \biboptions{authoryear}
+
+% \journal{Expert Systems with Applications}
 
 %% ESWA APA referencing style
-\bibliographystyle{model5-names}
-\biboptions{authoryear}
+% \bibliographystyle{model5-names}
+% \biboptions{authoryear}
 
 \begin{document}
 
@@ -40,11 +43,10 @@
 
 \vspace{1.5cm}
 
-% Replace author details with your actual group members.
 Aryan Mohanlall$^{a}$ (u23565536@tuks.co.za),
 Jaden Moodley$^{a}$ (u22528492@tuks.co.za),
 Moloko Manthata$^{a}$ (u21616923@tuks.co.za),
-Fourth Author$^{a}$ (fourth.author@mail.com) \\
+Zingisa Matwana$^{a}$ (u25719302@tuks.co.za) \\
 
 \vspace{0.5cm}
 
@@ -54,11 +56,6 @@ $^a$ Department of Computer Science, University of Pretoria,
 Pretoria, Gauteng, South Africa
 
 \vspace{1cm}
-
-\textbf{Corresponding author:} Aryan Mohanlall \\
-Department of Computer Science, University of Pretoria \\
-Pretoria, Gauteng, South Africa \\
-Email: u23565536@tuks.co.za
 
 \end{flushleft}
 
@@ -81,8 +78,8 @@ Email: u23565536@tuks.co.za
 \author[label1]{Moloko Manthata}
 \ead{u21616923@tuks.co.za}
 
-\author[label1]{Fourth Author}
-\ead{fourth.author@mail.com}
+\author[label1]{Zingisa Matwana}
+\ead{u25719302@tuks.co.za}
 
 \cortext[cor1]{Corresponding author.}
 
@@ -115,13 +112,17 @@ magnetic resonance imaging (MRI) scans. Performance is evaluated using
 image reconstruction quality, segmentation quality, convergence
 behaviour, statistical significance, and computational scalability.
 
-On BSD500, all five algorithms completed the full 30-run,
-30,000-evaluation design. On CHAOS, the completed DE, LADE and JADE
-results show increasing reconstruction quality as the number of
-thresholds grows; at $K=12$, JADE attained the highest mean Otsu PSNR
-of these three algorithms (38.1270~dB). SHADE and L-SHADE results for
-CHAOS and the complete five-algorithm statistical comparison remain
-pending, so no overall significance claim is made here.
+All five algorithms completed the full 30-run, 30,000-evaluation design
+on both datasets. Reconstruction quality generally increases with the
+number of thresholds; on CHAOS at $K=12$, L-SHADE attains the highest
+mean Otsu PSNR (38.1879~dB), SHADE the highest mean Kapur PSNR
+(37.0522~dB), and LADE the highest mean Tsallis PSNR (32.6407~dB).
+On CHAOS, mean class separability across algorithms rises from 0.976,
+0.910 and 0.813 at $K=3$ to 0.998, 0.997 and 0.985 at $K=12$ for Otsu,
+Kapur and Tsallis, respectively.
+Friedman tests with the Iman--Davenport correction reject equivalent
+fitness ranks for every dataset--objective combination, with L-SHADE
+holding the best mean fitness rank in all six comparisons.
 
 The findings provide an empirical comparison of adaptive and
 non-adaptive Differential Evolution approaches for increasingly
@@ -216,8 +217,6 @@ The main objectives of this study are therefore to:
 \section{Background and Related Work}
 \label{sec:background}
 
-% This section is where most of your literature citations should go.
-
 \subsection{Multilevel Image Thresholding}
 
 Consider a grey-scale image $I$ of size $M \times N$ with
@@ -259,57 +258,72 @@ C_0,C_1,\ldots,C_K.
 \subsection{Otsu's Between-Class Variance}
 \label{sec:otsu}
 
-% Explain Otsu based on the literature.
-% Add the exact equations used by your implementation.
-%
-% Explain:
-% - class probabilities
-% - class means
-% - global mean
-% - between-class variance
-% - maximisation objective
-
 Otsu's method selects thresholds by maximising the between-class
-variance of the resulting intensity classes.
-
-% TODO: Insert complete Otsu multilevel formulation and citation.
+variance of the resulting intensity classes \citep{otsu1979threshold}.
+For class $C_j$, let
+\begin{equation}
+\omega_j=\sum_{i\in C_j}p_i,
+\qquad
+\mu_j=\frac{1}{\omega_j}\sum_{i\in C_j}i p_i,
+\qquad
+\mu_T=\sum_{i=0}^{L-1}i p_i.
+\end{equation}
+The multilevel objective maximised in this study is
+\begin{equation}
+J_{\mathrm{Otsu}}(\mathbf{t})
+=\sum_{j=0}^{K}\omega_j(\mu_j-\mu_T)^2
+=\sum_{j=0}^{K}\frac{m_j^2}{\omega_j}-\mu_T^2,
+\quad m_j=\sum_{i\in C_j}i p_i.
+\end{equation}
+The implementation uses the algebraically equivalent expression on the
+right, which avoids subtracting nearly equal class and global means. Empty
+classes contribute zero.
 
 
 \subsection{Kapur's Information Entropy}
 \label{sec:kapur}
 
 Kapur's method formulates threshold selection as an entropy maximisation
-problem.
-
-% TODO:
-% - Define entropy for each intensity class.
-% - Define total entropy.
-% - Explain why larger entropy is preferred.
-% - Cite original/relevant literature.
+problem \citep{kapur1985entropy}. Within class $C_j$, the conditional
+probability of level $i$ is $p_i/\omega_j$, giving
+\begin{equation}
+H_j=-\sum_{i\in C_j}\frac{p_i}{\omega_j}
+\ln\left(\frac{p_i}{\omega_j}\right),
+\qquad
+J_{\mathrm{Kapur}}(\mathbf{t})=\sum_{j=0}^{K}H_j.
+\end{equation}
+Maximising total class entropy favours partitions whose classes retain rich
+intensity distributions. Terms with zero probability are defined as zero,
+and empty classes make no contribution.
 
 
 \subsection{Tsallis Non-Extensive Entropy}
 \label{sec:tsallis}
 
 Tsallis entropy generalises conventional information entropy through
-the introduction of the non-extensivity parameter $q$.
-
-% TODO:
-% Insert actual equation used by your implementation.
-%
-% Explicitly explain:
-% q = 1 relationship to conventional entropy
-% selected q value(s), e.g. q = 0.8
-% why q changes the optimisation landscape
+the introduction of the non-extensivity parameter $q$
+\citep{tsallis1988generalization}. The class entropy and the exact
+single-product objective used here are
+\begin{equation}
+S_q(C_j)=\frac{1-\sum_{i\in C_j}(p_i/\omega_j)^q}{q-1},
+\end{equation}
+\begin{equation}
+J_{\mathrm{Tsallis}}(\mathbf{t})=
+\sum_{j=0}^{K}S_q(C_j)+(1-q)\prod_{j=0}^{K}S_q(C_j).
+\end{equation}
+All experiments fix $q=0.8$. In the limit $q\rightarrow1$, the class
+entropy becomes Shannon entropy and the coupling term vanishes, recovering
+the additive Kapur form. Values away from one reweight class probabilities
+and couple all classes through the product term, thereby changing the
+optimisation landscape.
 
 
 \subsection{Differential Evolution}
 \label{sec:de_background}
 
 Differential Evolution is a stochastic population-based optimisation
-algorithm operating through mutation, crossover, and selection.
-
-% Explain generic DE before discussing variants.
+algorithm operating through mutation, crossover, and selection
+\citep{storn1997differential}.
 
 \subsubsection{Mutation}
 
@@ -385,62 +399,65 @@ and exclude the target. Mutants are clipped to $[1,254]$, and binomial
 crossover forces at least one mutant component. All trials in a generation
 are formed from the preceding population before replacement. Greedy
 selection accepts a trial whose fitness is at least that of its parent.
-
-% TODO:
-% Specify:
-% - population size
-% - F
-% - CR
-% - boundary handling
-% - integer threshold conversion
-% - duplicate threshold handling
-% - sorting of thresholds
+Real candidates are decoded to distinct sorted integer thresholds using the
+common procedure described in Section~\ref{sec:methodology}; consequently,
+all algorithms optimise under identical boundary and discretisation rules.
 
 
-\subsection{JADE}
+\subsection{JADE} 
+\label{sec:jade} 
+JADE extends conventional DE through adaptive control parameters, the DE/current-to-$p$best/1 mutation strategy, and an optional external archive \citep{zhang2009jade}. For target vector $\mathbf{x}_{i,g}$, the mutant vector is generated as \begin{equation} 
+\mathbf{v}_{i,g} = 
+\mathbf{x}_{i,g} 
++ F_i\left(\mathbf{x}_{pbest,g}-\mathbf{x}_{i,g}\right) 
++ F_i\left(\mathbf{x}_{r_1,g}-\widetilde{\mathbf{x}}_{r_2,g}\right), 
+\end{equation}where $\mathbf{x}_{pbest,g}$ is selected uniformly from the best $\lceil pN_P\rceil$ individuals, $\mathbf{x}_{r_1,g}$ is selected from the current population, and $\widetilde{\mathbf{x}}_{r_2,g}$ is selected from the union of the population and external archive. 
 
-JADE extends conventional DE through adaptive control parameters and
-the current-to-$p$best mutation strategy.
+The implementation uses $N_P=50$, $p=0.05$, adaptation rate $c=0.1$, and initial values $\mu_F=\mu_{CR}=0.5$. For each target, the crossover rate is sampled as $CR_i\sim\mathcal{N}(\mu_{CR},0.1)$ and clipped to $[0,1]$. The mutation factor is sampled as $F_i\sim\mathcal{C}(\mu_F,0.1)$; non-positive values are resampled and values greater than one are capped at one. Binomial crossover is applied with one mandatory mutant component. 
 
-% TODO:
-% Explain:
-% - DE/current-to-pbest/1
-% - p-best selection
-% - adaptive F
-% - adaptive CR
-% - external archive if enabled
-% - parameter values
+Strictly improving offspring replace their parents. The successful parameter values update $\mu_{CR}$ using an arithmetic mean and $\mu_F$ using a Lehmer mean: 
+\begin{align} 
+\mu_{CR} &\leftarrow (1-c)\mu_{CR}+c\,\operatorname{mean}(S_{CR}),\\ 
+\mu_F &\leftarrow 
+(1-c)\mu_F+ 
+c\,\frac{\sum_{F\in S_F}F^2}{\sum_{F\in S_F}F}. 
+\end{align} 
+Replaced parents are inserted into the external archive, which is randomly trimmed to the population size and provides the second difference vector. For the thresholding problem, candidate vectors are bounded to $[1,254]$ and decoded into valid, strictly increasing integer thresholds before objective evaluation.
 
 
 \subsection{SHADE}
 
 SHADE uses success-history based adaptation to maintain historical
-memories of successful $F$ and $CR$ parameter values.
-
-% TODO:
-% Explain:
-% - memory M_F
-% - memory M_CR
-% - success history
-% - sampling F and CR
-% - memory update mechanism
+memories of successful $F$ and $CR$ parameter values
+\citep{tanabe2013shade}. The population size is 50, the archive is enabled,
+and the two circular memories have $H=10$ entries initialised to 0.5. Each
+trial samples a memory index; $F$ is drawn from a Cauchy distribution and
+$CR$ from a normal distribution, both with scale 0.1. Successful parameters
+are weighted by their fitness improvements and stored using weighted Lehmer
+means. The current-to-$p$best/1 mutation uses a randomly sampled
+$p\in[2/N,0.2]$ (with ordered endpoints) and may draw its second donor from
+the population--archive union.
 
 
 \subsection{L-SHADE}
 
 L-SHADE extends SHADE through Linear Population Size Reduction (LPSR).
-
-% TODO:
-% Explain:
-% - how population size decreases
-% - initial population size
-% - minimum population size
-% - relationship to consumed FEs
+\citep{tanabe2014lshade}. It retains the SHADE settings above but reduces
+the population from $N_{\mathrm{init}}=50$ toward $N_{\min}=4$ according to
+\begin{equation}
+N(FES)=\max\left\{4,\operatorname{round}\left[
+50+(4-50)\frac{FES}{FES_{\max}}\right]\right\}.
+\end{equation}
+After each generation the worst individuals are removed to reach the target
+size, and the archive is truncated to the reduced population size. Thus the
+search begins with greater diversity and progressively allocates evaluations
+to a smaller, more exploitative population.
 
 
 \subsection{Late Acceptance Differential Evolution}
 
-LADE integrates a Late Acceptance mechanism into Differential Evolution.
+LADE integrates the late-acceptance idea of comparing a candidate with a
+historical objective value \citep{burke2017late} into Differential Evolution.
 
 LADE uses the same population size, mutation and crossover settings as DE.
 Each individual has a circular fitness history of length $L_H=20$,
@@ -459,16 +476,6 @@ This is a best-per-slot retention policy: the stored benchmark can be
 older than 20 generations, rather than an exact rolling record of past
 fitness. The best solution seen during the entire run is retained
 separately, since an accepted trial may be worse than its current parent.
-
-% TODO:
-% This section MUST match your actual implementation.
-%
-% Explain:
-% - late acceptance history/list
-% - acceptance condition
-% - history length
-% - how the mechanism changes ordinary DE selection
-% - mutation/crossover strategy used
 
 
 
@@ -502,12 +509,6 @@ are $(t_j,t_{j+1}]$, and the final class is $(t_K,255]$.
 For reconstruction metrics, every pixel is replaced by the mean intensity
 of its class without rounding that mean.
 
-% TODO:
-% Explain precisely how your code:
-% - rounds/clips values
-% - sorts thresholds
-% - handles duplicates
-% - guarantees 0 < t1 < ... < tK < 255
 
 
 \subsection{Threshold Levels}
@@ -532,27 +533,31 @@ The supplied files \texttt{img1.png} through \texttt{img10.png} in
 excluded. RGB inputs are converted to 8-bit greyscale using
 $0.299R+0.587G+0.114B$, rounded to the nearest integer. Images retain their
 supplied dimensions; no resizing or filtering is applied.
-
-% TODO:
-% - identify the exact 10 images
-% - image dimensions if relevant
-% - grayscale conversion
-% - preprocessing performed
-% - why these images were selected
+The complete supplied non-ground-truth subset is used rather than a further
+sample: \texttt{img1.png}--\texttt{img10.png}. In height-by-width pixels,
+their dimensions are respectively $262\times181$, $268\times180$,
+$265\times178$, $265\times181$, $268\times184$, $261\times181$,
+$267\times181$, $261\times181$, $267\times181$, and $163\times241$.
+Their intensity ranges are recorded in the generated image manifest.
 
 
 \subsubsection{CHAOS MRI Dataset}
 
 The second experimental phase evaluates the optimisation algorithms on
-15 MRI scan images from the CHAOS dataset.
-
-% TODO:
-% - modality used
-% - exact images/slices
-% - preprocessing
-% - normalisation
-% - ground-truth masks
-% - GT mask matching procedure
+15 abdominal MRI images from the CHAOS challenge. All supplied files are used:
+\texttt{IMG-0003-00010}, \texttt{IMG-0004-00010},
+\texttt{IMG-0006-00010}, \texttt{IMG-0010-00010},
+\texttt{IMG-0011-00010}, \texttt{IMG-0012-00010},
+\texttt{IMG-0016-00010}, \texttt{IMG-0017-00010},
+\texttt{IMG-0020-00010}, \texttt{IMG-0022-00010},
+\texttt{IMG-0028-00010}, \texttt{IMG-0040-00010},
+\texttt{IMG-0052-00010}, \texttt{IMG-0058-00010}, and
+\texttt{IMG-0082-00010}. Nine are $256\times256$, four are
+$288\times288$, one is $320\times320$, and one is $352\times352$ pixels.
+They are loaded directly as 8-bit greyscale PNGs with no resizing, filtering,
+contrast enhancement or additional normalisation. The supplied filenames do
+not encode sufficient acquisition metadata to distinguish the CHAOS MRI
+sequence, so no unsupported T1-DUAL or T2-SPIR designation is assumed.
 
 
 \subsection{Experimental Parameters}
@@ -626,7 +631,7 @@ Each algorithm receives the same maximum number of objective function
 evaluations to ensure that algorithms are compared under an equivalent
 computational optimisation budget.
 
-For the completed DE/LADE comparison, seeds are generated from a fixed
+For all algorithms, seeds are generated from a fixed
 base value, image identifier, objective, $K$ and run index using an
 8-byte BLAKE2b digest reduced modulo $2^{32}$. The algorithm name is
 excluded, so corresponding runs use the same seed and initial population.
@@ -645,6 +650,27 @@ For each independent run, the following information is recorded:
     \item function evaluations;
     \item convergence history.
 \end{itemize}
+
+\subsection{Reproducibility and Result Provenance}
+
+The repository provides \texttt{run\_all.py} as the master entry point. By
+default it executes both dataset sweeps, generates the statistical and
+scalability analysis, and writes a JSON manifest containing the run settings
+and software platform. Cell-level Parquet
+files make the workflow resumable: an interrupted run skips completed cells
+unless \texttt{--overwrite} is supplied. Each saved row includes its
+deterministic seed, thresholds, fitness, metrics, timing and consumed FEs;
+convergence traces are stored separately as NumPy arrays.
+
+Because the completed algorithms were produced in separate result roots, the
+final analysis combines eight explicitly listed sources through repeated
+\texttt{--source} arguments rather than rerunning optimisation. Its
+\texttt{analysis\_manifest.json} records those absolute source paths and
+confirms 67,500 successful rows spanning both datasets, five algorithms,
+three objectives and all six $K$ values. The exact reconstruction command is
+documented in the repository README. Python dependencies are pinned in
+\texttt{requirements.txt}; the saved timing records do not contain processor
+or worker-count metadata, which limits cross-session timing interpretation.
 
 
 
@@ -679,26 +705,21 @@ PSNR =
 \frac{MAX_I^2}{MSE}
 \right).
 \end{equation}
-
-% Explain what higher/lower means.
+For 8-bit images, $MAX_I=255$. Higher PSNR indicates lower reconstruction
+error; an exact reconstruction has infinite PSNR.
 
 
 \subsection{Structural Similarity Index}
 
 The Structural Similarity Index (SSIM) measures structural similarity
 between the original image and its reconstructed or segmented
-representation.
-
-% TODO:
-% Add SSIM formulation or cite implementation.
-% Explain interpretation.
+representation. The implementation uses the standard luminance--contrast--
+structure form with an 11-pixel Gaussian window, $K_1=0.01$, $K_2=0.03$ and
+dynamic range 255. Scores closer to one indicate greater local structural
+agreement.
 
 
 \subsection{Feature Uniformity}
-
-% IMPORTANT:
-% Use the exact uniformity equation required by your implementation/
-% literature source.
 
 The uniformity metric measures the homogeneity of pixels contained
 within the regions produced by multilevel thresholding.
@@ -711,47 +732,16 @@ U=1-\frac{2K}{(I_{\max}-I_{\min})^2}
 where $\mu_j$ is the class mean and $I_{\max},I_{\min}$ are the observed
 image intensity extrema. Empty classes contribute zero. Higher values
 indicate greater within-class homogeneity; $U=1$ is assigned to a constant
-image. The multiplier is $2K$, with $K$ the number of thresholds.
+image. The multiplier is $2K$, with $K$ the number of thresholds, following
+the standard multilevel-thresholding convention.
 
-% TODO: Insert equation.
-
-
-\subsection{Dice Similarity Coefficient}
-
-When an anatomical ground-truth mask $B$ is available, the Dice coefficient
-for a predicted binary segmentation $A$ is
-
-\begin{equation}
-Dice =
-\frac{2|A \cap B|}
-{|A|+|B|},
-\end{equation}
-
-where $A$ represents the predicted segmentation and $B$ represents the
-ground-truth mask. The supplied CHAOS subset contains no masks, so this
-metric is defined here for completeness but is not calculated in
-Experiment~2.
-
-
-\subsection{Jaccard Index}
-
-The Jaccard index is
-
-\begin{equation}
-J(A,B)
-=
-\frac{|A\cap B|}
-{|A\cup B|}.
-\end{equation}
-
-As with Dice, Jaccard requires a ground-truth mask and is not calculated for
-the supplied mask-free CHAOS subset.
 
 
 \subsection{Class Separability}
 
 Class separability is the ratio of between-class variance to the total image
-variance,
+variance, corresponding to Otsu's normalised separability criterion
+\citep{otsu1979threshold},
 \begin{equation}
 \eta =
 \frac{\sum_{j=0}^{K} w_j(\mu_j-\mu_T)^2}{\sigma_T^2},
@@ -767,11 +757,6 @@ classes. A constant image is assigned zero.
 Execution time is measured to investigate the computational cost of
 each optimisation algorithm as dimensionality increases.
 
-% State:
-% - units
-% - timing function
-% - whether preprocessing is included
-% - machine specification
 
 
 
@@ -1062,17 +1047,15 @@ Across the five algorithms, descriptive differences depend on the objective and 
 
 \subsection{Experimental Objective}
 
-Results for DE, LADE, JADE on 15 CHAOS MRI images, using Otsu, Kapur and Tsallis ($q=0.8$), with $K\in\{3,5,7,9,11,12\}$. Each image--objective--threshold combination contains 30 runs with 30,000 function evaluations per run.
+Results for DE, LADE, JADE, SHADE, L-SHADE on 15 CHAOS MRI images, using Otsu, Kapur and Tsallis ($q=0.8$), with $K\in\{3,5,7,9,11,12\}$. Each image--objective--threshold combination contains 30 runs with 30,000 function evaluations per run.
 
-\subsection{Ground-Truth Mask Matching}
+\subsection{Domain-Specific Evaluation}
 
-The supplied CHAOS subset contains the 15 MRI slices used in the
-experiment but no corresponding anatomical ground-truth masks.
-Consequently, no threshold class can be matched objectively to a target
-organ, and Dice and Jaccard coefficients cannot be calculated. The
-experiment therefore reports reconstruction metrics and unsupervised
-class separability; the unavailable overlap tables are retained as
-dashes to make this limitation explicit.
+In accordance with the revised Experiment~2 specification, segmentation
+quality on CHAOS is evaluated without ground truth using class separability
+$\eta=\sigma_B^2/\sigma_T^2$. This measures how strongly the selected
+thresholds separate intensity classes relative to the image's total variance;
+higher values indicate more distinct classes.
 
 \subsection{Reconstruction Metrics}
 
@@ -1090,8 +1073,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $27.8831 \pm 0.8927$ & $31.4138 \pm 0.8965$ & $33.8331 \pm 0.9564$ & $35.3458 \pm 0.9609$ & $36.5615 \pm 0.9729$ & $37.1370 \pm 0.9576$ \\
 JADE & $27.8831 \pm 0.8927$ & $31.4137 \pm 0.8965$ & $33.9063 \pm 0.9497$ & $35.8694 \pm 0.9423$ & $37.4339 \pm 0.9438$ & $38.1270 \pm 0.9569$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $27.8831 \pm 0.8927$ & $31.4138 \pm 0.8965$ & $33.9082 \pm 0.9499$ & $35.8772 \pm 0.9426$ & $37.4524 \pm 0.9433$ & $38.1542 \pm 0.9541$ \\
+L-SHADE & $27.8831 \pm 0.8927$ & $31.4138 \pm 0.8965$ & $33.9102 \pm 0.9495$ & $35.8866 \pm 0.9426$ & $37.4741 \pm 0.9422$ & $38.1879 \pm 0.9562$ \\
 LADE & $27.8831 \pm 0.8927$ & $31.4138 \pm 0.8965$ & $33.7570 \pm 0.9526$ & $35.2925 \pm 0.9638$ & $36.5373 \pm 0.9430$ & $37.1047 \pm 0.9660$ \\
 \bottomrule
 \end{tabular}%
@@ -1110,8 +1093,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.8664 \pm 0.0411$ & $0.9242 \pm 0.0220$ & $0.9495 \pm 0.0146$ & $0.9612 \pm 0.0120$ & $0.9691 \pm 0.0097$ & $0.9721 \pm 0.0090$ \\
 JADE & $0.8664 \pm 0.0411$ & $0.9240 \pm 0.0219$ & $0.9499 \pm 0.0144$ & $0.9643 \pm 0.0109$ & $0.9730 \pm 0.0085$ & $0.9763 \pm 0.0076$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.8664 \pm 0.0411$ & $0.9240 \pm 0.0219$ & $0.9499 \pm 0.0144$ & $0.9643 \pm 0.0109$ & $0.9731 \pm 0.0085$ & $0.9764 \pm 0.0076$ \\
+L-SHADE & $0.8664 \pm 0.0411$ & $0.9240 \pm 0.0219$ & $0.9500 \pm 0.0143$ & $0.9644 \pm 0.0109$ & $0.9732 \pm 0.0084$ & $0.9766 \pm 0.0076$ \\
 LADE & $0.8664 \pm 0.0411$ & $0.9243 \pm 0.0220$ & $0.9487 \pm 0.0150$ & $0.9607 \pm 0.0122$ & $0.9688 \pm 0.0098$ & $0.9718 \pm 0.0089$ \\
 \bottomrule
 \end{tabular}%
@@ -1130,8 +1113,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9941 \pm 0.0012$ & $0.9946 \pm 0.0011$ & $0.9950 \pm 0.0010$ & $0.9953 \pm 0.0010$ \\
 JADE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9942 \pm 0.0012$ & $0.9952 \pm 0.0010$ & $0.9959 \pm 0.0008$ & $0.9962 \pm 0.0008$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9942 \pm 0.0012$ & $0.9952 \pm 0.0010$ & $0.9960 \pm 0.0008$ & $0.9962 \pm 0.0008$ \\
+L-SHADE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9942 \pm 0.0012$ & $0.9953 \pm 0.0010$ & $0.9960 \pm 0.0008$ & $0.9963 \pm 0.0008$ \\
 LADE & $0.9900 \pm 0.0020$ & $0.9926 \pm 0.0015$ & $0.9940 \pm 0.0012$ & $0.9946 \pm 0.0011$ & $0.9950 \pm 0.0010$ & $0.9952 \pm 0.0010$ \\
 \bottomrule
 \end{tabular}%
@@ -1150,8 +1133,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9940 \pm 0.0016$ & $0.9957 \pm 0.0011$ & $0.9968 \pm 0.0008$ & $0.9972 \pm 0.0007$ \\
 JADE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9941 \pm 0.0015$ & $0.9962 \pm 0.0010$ & $0.9974 \pm 0.0006$ & $0.9978 \pm 0.0006$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9941 \pm 0.0015$ & $0.9962 \pm 0.0010$ & $0.9974 \pm 0.0006$ & $0.9978 \pm 0.0006$ \\
+L-SHADE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9941 \pm 0.0015$ & $0.9962 \pm 0.0010$ & $0.9974 \pm 0.0006$ & $0.9978 \pm 0.0005$ \\
 LADE & $0.9760 \pm 0.0076$ & $0.9894 \pm 0.0030$ & $0.9939 \pm 0.0016$ & $0.9957 \pm 0.0011$ & $0.9968 \pm 0.0008$ & $0.9972 \pm 0.0007$ \\
 \bottomrule
 \end{tabular}%
@@ -1170,8 +1153,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $23.9217 \pm 3.2645$ & $29.5546 \pm 1.0739$ & $32.5833 \pm 0.8853$ & $34.2965 \pm 0.9654$ & $35.5513 \pm 1.0270$ & $36.1433 \pm 0.9929$ \\
 JADE & $23.9215 \pm 3.2645$ & $29.5506 \pm 1.0778$ & $32.5796 \pm 0.8782$ & $34.6381 \pm 0.9239$ & $36.3703 \pm 0.7912$ & $37.0197 \pm 0.7930$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $23.9217 \pm 3.2646$ & $29.5508 \pm 1.0782$ & $32.5807 \pm 0.8757$ & $34.6458 \pm 0.9151$ & $36.3760 \pm 0.7727$ & $37.0522 \pm 0.7896$ \\
+L-SHADE & $23.9217 \pm 3.2646$ & $29.5506 \pm 1.0778$ & $32.6031 \pm 0.8709$ & $34.6541 \pm 0.9234$ & $36.3609 \pm 0.7823$ & $37.0286 \pm 0.7541$ \\
 LADE & $23.9227 \pm 3.2664$ & $29.5522 \pm 1.0768$ & $32.5398 \pm 0.8799$ & $34.2192 \pm 0.9770$ & $35.5391 \pm 0.9809$ & $36.1674 \pm 1.0023$ \\
 \bottomrule
 \end{tabular}%
@@ -1190,8 +1173,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.6508 \pm 0.2917$ & $0.9107 \pm 0.0267$ & $0.9398 \pm 0.0166$ & $0.9537 \pm 0.0136$ & $0.9625 \pm 0.0118$ & $0.9662 \pm 0.0106$ \\
 JADE & $0.6508 \pm 0.2917$ & $0.9106 \pm 0.0268$ & $0.9396 \pm 0.0163$ & $0.9551 \pm 0.0133$ & $0.9661 \pm 0.0105$ & $0.9694 \pm 0.0098$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.6508 \pm 0.2917$ & $0.9106 \pm 0.0268$ & $0.9397 \pm 0.0162$ & $0.9551 \pm 0.0133$ & $0.9661 \pm 0.0103$ & $0.9696 \pm 0.0097$ \\
+L-SHADE & $0.6508 \pm 0.2917$ & $0.9106 \pm 0.0268$ & $0.9397 \pm 0.0161$ & $0.9551 \pm 0.0133$ & $0.9660 \pm 0.0104$ & $0.9694 \pm 0.0097$ \\
 LADE & $0.6509 \pm 0.2916$ & $0.9107 \pm 0.0268$ & $0.9395 \pm 0.0164$ & $0.9532 \pm 0.0139$ & $0.9625 \pm 0.0117$ & $0.9662 \pm 0.0108$ \\
 \bottomrule
 \end{tabular}%
@@ -1210,8 +1193,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9654 \pm 0.0376$ & $0.9886 \pm 0.0031$ & $0.9921 \pm 0.0016$ & $0.9931 \pm 0.0015$ & $0.9937 \pm 0.0015$ & $0.9940 \pm 0.0014$ \\
 JADE & $0.9654 \pm 0.0376$ & $0.9885 \pm 0.0031$ & $0.9921 \pm 0.0015$ & $0.9937 \pm 0.0013$ & $0.9948 \pm 0.0009$ & $0.9952 \pm 0.0009$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.9654 \pm 0.0376$ & $0.9885 \pm 0.0031$ & $0.9921 \pm 0.0015$ & $0.9937 \pm 0.0013$ & $0.9949 \pm 0.0009$ & $0.9952 \pm 0.0009$ \\
+L-SHADE & $0.9654 \pm 0.0376$ & $0.9885 \pm 0.0031$ & $0.9922 \pm 0.0015$ & $0.9937 \pm 0.0013$ & $0.9948 \pm 0.0009$ & $0.9952 \pm 0.0008$ \\
 LADE & $0.9654 \pm 0.0376$ & $0.9885 \pm 0.0031$ & $0.9920 \pm 0.0016$ & $0.9930 \pm 0.0016$ & $0.9937 \pm 0.0014$ & $0.9940 \pm 0.0014$ \\
 \bottomrule
 \end{tabular}%
@@ -1230,8 +1213,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9105 \pm 0.0956$ & $0.9836 \pm 0.0056$ & $0.9919 \pm 0.0024$ & $0.9945 \pm 0.0016$ & $0.9959 \pm 0.0013$ & $0.9964 \pm 0.0012$ \\
 JADE & $0.9105 \pm 0.0956$ & $0.9835 \pm 0.0056$ & $0.9919 \pm 0.0023$ & $0.9950 \pm 0.0015$ & $0.9966 \pm 0.0010$ & $0.9971 \pm 0.0009$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.9105 \pm 0.0956$ & $0.9835 \pm 0.0056$ & $0.9919 \pm 0.0022$ & $0.9950 \pm 0.0015$ & $0.9966 \pm 0.0010$ & $0.9971 \pm 0.0008$ \\
+L-SHADE & $0.9105 \pm 0.0956$ & $0.9835 \pm 0.0056$ & $0.9920 \pm 0.0023$ & $0.9950 \pm 0.0015$ & $0.9966 \pm 0.0010$ & $0.9971 \pm 0.0009$ \\
 LADE & $0.9104 \pm 0.0959$ & $0.9835 \pm 0.0056$ & $0.9918 \pm 0.0023$ & $0.9944 \pm 0.0018$ & $0.9959 \pm 0.0013$ & $0.9964 \pm 0.0011$ \\
 \bottomrule
 \end{tabular}%
@@ -1250,8 +1233,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $19.2215 \pm 1.6472$ & $21.6107 \pm 1.1139$ & $23.3961 \pm 1.3927$ & $25.6068 \pm 2.0485$ & $30.6101 \pm 3.6384$ & $32.5967 \pm 3.4584$ \\
 JADE & $19.2181 \pm 1.6513$ & $21.6330 \pm 1.1308$ & $23.2566 \pm 1.2368$ & $24.9454 \pm 1.4385$ & $28.0967 \pm 2.9150$ & $31.8020 \pm 3.9910$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $19.2196 \pm 1.6494$ & $21.6346 \pm 1.1324$ & $23.2030 \pm 1.2253$ & $24.9350 \pm 1.4466$ & $27.9417 \pm 2.9986$ & $31.8170 \pm 3.9610$ \\
+L-SHADE & $19.2181 \pm 1.6513$ & $21.6353 \pm 1.1324$ & $23.2081 \pm 1.2007$ & $24.8569 \pm 1.4351$ & $27.8754 \pm 2.9272$ & $31.8367 \pm 3.9782$ \\
 LADE & $19.2181 \pm 1.6513$ & $21.6014 \pm 1.1181$ & $23.3535 \pm 1.4040$ & $25.7208 \pm 2.1794$ & $30.5670 \pm 3.6296$ & $32.6407 \pm 3.6075$ \\
 \bottomrule
 \end{tabular}%
@@ -1270,8 +1253,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.2651 \pm 0.0369$ & $0.3339 \pm 0.0454$ & $0.3942 \pm 0.0607$ & $0.4913 \pm 0.1030$ & $0.7339 \pm 0.1884$ & $0.8163 \pm 0.1675$ \\
 JADE & $0.2650 \pm 0.0370$ & $0.3347 \pm 0.0437$ & $0.3883 \pm 0.0609$ & $0.4556 \pm 0.0672$ & $0.6043 \pm 0.1512$ & $0.7612 \pm 0.1839$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.2650 \pm 0.0370$ & $0.3347 \pm 0.0437$ & $0.3867 \pm 0.0601$ & $0.4551 \pm 0.0678$ & $0.5962 \pm 0.1538$ & $0.7616 \pm 0.1819$ \\
+L-SHADE & $0.2650 \pm 0.0370$ & $0.3347 \pm 0.0437$ & $0.3867 \pm 0.0593$ & $0.4517 \pm 0.0660$ & $0.5932 \pm 0.1514$ & $0.7619 \pm 0.1830$ \\
 LADE & $0.2650 \pm 0.0370$ & $0.3337 \pm 0.0457$ & $0.3926 \pm 0.0598$ & $0.4968 \pm 0.1153$ & $0.7298 \pm 0.1886$ & $0.8167 \pm 0.1745$ \\
 \bottomrule
 \end{tabular}%
@@ -1290,8 +1273,8 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.9225 \pm 0.0328$ & $0.9287 \pm 0.0184$ & $0.9326 \pm 0.0219$ & $0.9449 \pm 0.0258$ & $0.9728 \pm 0.0247$ & $0.9813 \pm 0.0185$ \\
 JADE & $0.9224 \pm 0.0329$ & $0.9290 \pm 0.0186$ & $0.9311 \pm 0.0196$ & $0.9391 \pm 0.0207$ & $0.9593 \pm 0.0209$ & $0.9768 \pm 0.0183$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.9225 \pm 0.0329$ & $0.9290 \pm 0.0186$ & $0.9303 \pm 0.0197$ & $0.9389 \pm 0.0207$ & $0.9572 \pm 0.0236$ & $0.9770 \pm 0.0179$ \\
+L-SHADE & $0.9224 \pm 0.0329$ & $0.9290 \pm 0.0187$ & $0.9305 \pm 0.0193$ & $0.9379 \pm 0.0208$ & $0.9571 \pm 0.0223$ & $0.9771 \pm 0.0176$ \\
 LADE & $0.9224 \pm 0.0329$ & $0.9285 \pm 0.0184$ & $0.9318 \pm 0.0227$ & $0.9458 \pm 0.0258$ & $0.9730 \pm 0.0227$ & $0.9809 \pm 0.0193$ \\
 \bottomrule
 \end{tabular}%
@@ -1310,131 +1293,9 @@ Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
 \midrule
 DE & $0.8130 \pm 0.0917$ & $0.8968 \pm 0.0393$ & $0.9292 \pm 0.0325$ & $0.9553 \pm 0.0240$ & $0.9804 \pm 0.0202$ & $0.9868 \pm 0.0166$ \\
 JADE & $0.8128 \pm 0.0919$ & $0.8981 \pm 0.0340$ & $0.9266 \pm 0.0345$ & $0.9508 \pm 0.0196$ & $0.9719 \pm 0.0164$ & $0.9841 \pm 0.0146$ \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
+SHADE & $0.8129 \pm 0.0918$ & $0.8982 \pm 0.0340$ & $0.9258 \pm 0.0346$ & $0.9507 \pm 0.0196$ & $0.9707 \pm 0.0177$ & $0.9843 \pm 0.0147$ \\
+L-SHADE & $0.8128 \pm 0.0919$ & $0.8982 \pm 0.0340$ & $0.9259 \pm 0.0345$ & $0.9500 \pm 0.0193$ & $0.9705 \pm 0.0171$ & $0.9842 \pm 0.0149$ \\
 LADE & $0.8128 \pm 0.0919$ & $0.8963 \pm 0.0406$ & $0.9286 \pm 0.0324$ & $0.9558 \pm 0.0240$ & $0.9801 \pm 0.0202$ & $0.9864 \pm 0.0170$ \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\subsection{Ground-Truth Segmentation Performance}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Dice coefficient on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-otsu-dice}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Jaccard index on CHAOS MRI using Otsu: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-otsu-jaccard}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Dice coefficient on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-kapur-dice}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Jaccard index on CHAOS MRI using Kapur: pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-kapur-jaccard}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Dice coefficient on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-tsallis-dice}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
-\bottomrule
-\end{tabular}%
-}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\small
-\caption{Jaccard index on CHAOS MRI using Tsallis ($q=0.8$): pooled mean $\pm$ sample standard deviation across 450 observations per entry (15 slices, 30 runs each). Dashes indicate unavailable results.}
-\label{tab:chaos-tsallis-jaccard}
-\resizebox{\textwidth}{!}{%
-\begin{tabular}{lcccccc}
-\toprule
-Algorithm & $K=3$ & $K=5$ & $K=7$ & $K=9$ & $K=11$ & $K=12$ \\
-\midrule
-DE & -- & -- & -- & -- & -- & -- \\
-JADE & -- & -- & -- & -- & -- & -- \\
-SHADE & -- & -- & -- & -- & -- & -- \\
-L-SHADE & -- & -- & -- & -- & -- & -- \\
-LADE & -- & -- & -- & -- & -- & -- \\
 \bottomrule
 \end{tabular}%
 }
@@ -1445,21 +1306,21 @@ LADE & -- & -- & -- & -- & -- & -- \\
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{exp2_segmentation_otsu.png}
-\caption{Original and thresholded image IMG-0003-00010 using Otsu at $K=3,7,12$. Rows: DE, LADE, JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\caption{Original and thresholded image IMG-0003-00010 using Otsu at $K=3,7,12$. Rows: DE, LADE, JADE, SHADE, L-SHADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
 \label{fig:chaos-otsu}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{exp2_segmentation_kapur.png}
-\caption{Original and thresholded image IMG-0003-00010 using Kapur at $K=3,7,12$. Rows: DE, LADE, JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\caption{Original and thresholded image IMG-0003-00010 using Kapur at $K=3,7,12$. Rows: DE, LADE, JADE, SHADE, L-SHADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
 \label{fig:chaos-kapur}
 \end{figure}
 
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.9\textwidth]{exp2_segmentation_tsallis.png}
-\caption{Original and thresholded image IMG-0003-00010 using Tsallis at $K=3,7,12$. Rows: DE, LADE, JADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
+\caption{Original and thresholded image IMG-0003-00010 using Tsallis at $K=3,7,12$. Rows: DE, LADE, JADE, SHADE, L-SHADE. Solutions are selected by final fitness closest to the median, with ties resolved by the lowest run index. The displayed run number identifies an independent repetition.}
 \label{fig:chaos-tsallis}
 \end{figure}
 
@@ -1472,6 +1333,11 @@ LADE & -- & -- & -- & -- & -- & -- \\
 \label{fig:chaos-convergence}
 \end{figure}
 
+Figure~\ref{fig:chaos-convergence} shows nondecreasing best-so-far fitness
+under the common evaluation budget. For this illustrative slice, the adaptive
+SHADE variants continue improving later in the run, while gains generally
+taper as the algorithms approach their final solutions.
+
 \subsection{Execution Time}
 
 \begin{figure}[htbp]
@@ -1481,24 +1347,30 @@ LADE & -- & -- & -- & -- & -- & -- \\
 \label{fig:chaos-runtime}
 \end{figure}
 
+Figure~\ref{fig:chaos-runtime} shows that the adaptive methods generally
+become slower as $K$ increases, whereas DE and LADE are comparatively flat.
+Because algorithms were executed in separate sessions, these timings are most
+useful for assessing within-algorithm scaling rather than absolute speed.
+
 \subsection{Discussion of Experiment 2}
 
-For the three completed algorithms, increasing $K$ generally improves
-PSNR, SSIM, uniformity and class separability because additional
-thresholds permit a finer reconstruction of the MRI intensity
-distribution. Objective choice has a pronounced effect: Otsu and Kapur
-produce stronger reconstruction metrics than Tsallis with the single
-tested value $q=0.8$. At $K=12$, JADE records the highest mean Otsu PSNR
-(38.1270~dB) and Kapur PSNR (37.0197~dB), while LADE records the highest
-mean Tsallis PSNR (32.6407~dB), narrowly ahead of DE (32.5967~dB).
-Across the 18 objective--$K$ cells, JADE has the highest descriptive
-mean PSNR in nine cells, DE in six and LADE in three. These pooled means
-describe the completed results but do not establish statistical
-superiority. SHADE and L-SHADE must be completed on all 15 slices before
-the planned five-algorithm paired tests and overall ranking are valid.
+Across the five algorithms, reconstruction quality generally improves as the
+number of thresholds increases. The revised domain metric shows the same
+strong dimensional trend. Averaged across algorithms, class separability for
+Otsu rises from 0.975966 at $K=3$ to 0.997539 at $K=12$; Kapur rises from
+0.910492 to 0.996838; and Tsallis rises from 0.812897 to 0.985168. Thus Otsu
+separates the supplied MRI intensity classes most strongly at low $K$, while
+the three objectives become closer as additional thresholds are introduced.
 
-% 8. STATISTICAL ANALYSIS
-
+The best algorithmic values within a fixed objective and $K$ are much closer
+than the differences caused by objective choice or threshold count. For
+example, L-SHADE gives the highest mean Otsu separability from $K=5$ through
+$K=12$, whereas the leader changes across $K$ for Kapur and Tsallis. These
+small descriptive differences should be interpreted alongside the paired
+fitness tests rather than as evidence of significance. Finally, a value near
+one means that the threshold classes explain most of the image's intensity
+variance; it does not establish that the classes correspond to anatomical
+organs or clinically correct boundaries.
 
 \section{Statistical Analysis}
 \label{sec:statistics}
@@ -1519,48 +1391,106 @@ is used.
 
 \subsection{Wilcoxon Signed-Rank Test}
 
-Within each dataset--objective--$K$ cell, the planned pairwise analysis
+Within each dataset--objective--$K$ cell, the pairwise analysis
 uses the median fitness over 30 runs for each image. Algorithm values are
 therefore paired by image, and the two-sided Wilcoxon signed-rank test
 tests the null hypothesis that the paired differences are centred at
 zero. Holm correction controls the family-wise error rate across the
 algorithm pairs within a cell. Rank-biserial correlation is reported as
 an effect size, with its sign oriented so that a positive value favours
-the first algorithm. Final values are withheld until the complete CHAOS
-SHADE and L-SHADE grid is available.
+the first algorithm. Of the 360 corrected pairwise comparisons (two
+datasets, three objectives, six values of $K$ and ten algorithm pairs),
+221 are significant. Table~\ref{tab:wilcoxon-summary} aggregates the 36
+dataset--objective--$K$ cells for each pair; ``ties'' denote cells that
+are not significant after Holm correction rather than identical scores.
+
+\begin{table}[htbp]
+\caption{Holm-corrected Wilcoxon significant wins, non-significant ties
+and significant losses over 36 dataset--objective--$K$ cells. Counts are
+from the perspective of the first named algorithm.}
+\label{tab:wilcoxon-summary}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+Comparison & Wins & Ties & Losses \\
+\midrule
+DE vs JADE & 0 & 14 & 22 \\
+DE vs SHADE & 0 & 14 & 22 \\
+DE vs L-SHADE & 0 & 13 & 23 \\
+DE vs LADE & 10 & 26 & 0 \\
+JADE vs SHADE & 0 & 12 & 24 \\
+JADE vs L-SHADE & 0 & 12 & 24 \\
+JADE vs LADE & 24 & 12 & 0 \\
+SHADE vs L-SHADE & 0 & 12 & 24 \\
+SHADE vs LADE & 24 & 12 & 0 \\
+L-SHADE vs LADE & 24 & 12 & 0 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 
 \subsection{Friedman Test}
 
-The planned omnibus comparison treats each image--$K$ combination as a
+The omnibus comparison treats each image--$K$ combination as a
 block and the five algorithms as treatments, using the median over the
 30 runs for each block. The Friedman null hypothesis is that the
 algorithms have equivalent ranks. The Iman--Davenport correction is used
 for the omnibus significance decision, followed by a Nemenyi critical
-difference comparison of mean ranks when appropriate. Incomplete blocks
-are excluded; consequently, reporting this test before both CHAOS
-algorithms finish would discard much of the experiment and is deferred.
+difference comparison of mean ranks. All planned blocks are complete:
+60 for each BSD500 objective and 90 for each CHAOS objective. The null
+hypothesis is rejected for every dataset--objective combination
+(Table~\ref{tab:friedman-results}). L-SHADE has the lowest (best) mean
+rank in all six comparisons, followed by SHADE and JADE.
 
 
 \begin{table}[H]
-\caption{Statistical comparison of optimisation algorithms.}
-\label{tab:stats}
+\caption{Friedman tests with Iman--Davenport correction. Rank order is
+from best (lowest mean rank) to worst.}
+\label{tab:friedman-results}
 \centering
-
-\begin{tabular}{llll}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrl}
 \toprule
-Comparison & Metric & $p$-value & Significant? \\
+Dataset & Objective & Blocks & $F_{ID}$ & $p_{ID}$ & Mean-rank order \\
 \midrule
-
-DE vs JADE      & -- & -- & -- \\
-DE vs SHADE     & -- & -- & -- \\
-DE vs L-SHADE   & -- & -- & -- \\
-DE vs LADE      & -- & -- & -- \\
-
+BSD500 & Otsu & 60 & 76.786 & $1.302\times10^{-41}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
+BSD500 & Kapur & 60 & 108.551 & $2.513\times10^{-52}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
+BSD500 & Tsallis & 60 & 100.074 & $1.117\times10^{-49}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
+CHAOS & Otsu & 90 & 129.404 & $4.269\times10^{-68}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
+CHAOS & Kapur & 90 & 145.262 & $1.703\times10^{-73}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
+CHAOS & Tsallis & 90 & 156.346 & $4.669\times10^{-77}$ & L-SHADE $<$ SHADE $<$ JADE $<$ DE $<$ LADE \\
 \bottomrule
 \end{tabular}
+}
 
 \end{table}
+
+The Nemenyi critical difference is 0.787 for BSD500 and 0.643 for
+CHAOS. The complete per-cell Wilcoxon statistics, Holm-adjusted
+$p$-values, rank-biserial effects, Friedman ranks and critical-difference
+diagrams are retained with the generated analysis artifacts.
+
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_bsd500_otsu.png}\caption{Otsu}\end{subfigure}
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_bsd500_kapur.png}\caption{Kapur}\end{subfigure}
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_bsd500_tsallis.png}\caption{Tsallis}\end{subfigure}
+\caption{Nemenyi critical-difference diagrams for BSD500. Algorithms joined
+by a horizontal bar are not separated by more than the critical difference.}
+\label{fig:cd-bsd500}
+\end{figure*}
+
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_chaos_otsu.png}\caption{Otsu}\end{subfigure}
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_chaos_kapur.png}\caption{Kapur}\end{subfigure}
+\begin{subfigure}{0.32\textwidth}\includegraphics[width=\linewidth]{cd_chaos_tsallis.png}\caption{Tsallis}\end{subfigure}
+\caption{Nemenyi critical-difference diagrams for CHAOS MRI. Lower mean rank
+is better; connecting bars denote groups not separated by the critical
+difference.}
+\label{fig:cd-chaos}
+\end{figure*}
 
 
 
@@ -1573,43 +1503,72 @@ DE vs LADE      & -- & -- & -- \\
 
 \subsection{Execution Time versus Number of Thresholds}
 
-\begin{figure}[H]
-    \centering
-    % \includegraphics[width=0.8\textwidth]{runtime_vs_k.pdf}
-    \caption{Mean execution time as a function of threshold level $K$.}
-    \label{fig:runtime}
-\end{figure}
+\begin{figure*}[htbp]
+\centering
+\begin{subfigure}{0.49\textwidth}
+\includegraphics[width=\linewidth]{scalability_time_vs_k_bsd500.png}
+\caption{BSD500}
+\end{subfigure}
+\begin{subfigure}{0.49\textwidth}
+\includegraphics[width=\linewidth]{scalability_time_vs_k_chaos.png}
+\caption{CHAOS MRI}
+\end{subfigure}
+\caption{Mean optimiser wall time for 30,000 objective evaluations as $K$
+increases. Error bars show one standard deviation over objectives, images and
+runs.}
+\label{fig:runtime}
+\end{figure*}
 
-% Discuss:
-%
-% Does runtime increase with K?
-% Linear/non-linear?
-% Algorithm differences?
-% Impact of adaptation/archive/history?
-% Does L-SHADE's population reduction affect runtime?
+The timer surrounds only the optimiser call; image loading and post-run PSNR,
+SSIM, uniformity and separability calculations are excluded. Consequently,
+Figure~\ref{fig:runtime} compares search overhead under the common 30,000-FE
+budget. JADE rises from 4.18 to 6.12 seconds on BSD500 and from 3.50 to
+5.15 seconds on CHAOS as $K$ increases from 3 to 12. SHADE and L-SHADE show
+larger increases: on CHAOS they rise from 8.42 to 13.55 seconds and from
+8.31 to 13.03 seconds, respectively. Fixed-parameter DE and LADE are much
+flatter with $K$, although absolute CHAOS timings differ from BSD500.
+
+The extra cost of JADE, SHADE and L-SHADE is consistent with parameter
+sampling, ranking and archive maintenance. Population reduction does not make
+L-SHADE uniformly faster than SHADE: it reduces later population work, but
+both implementations still consume exactly 30,000 objective evaluations and
+their per-evaluation bookkeeping differs. Timings were collected during
+separate experiment sessions and exhibit large standard deviations for some
+algorithm--dataset groups; they support within-series scaling trends, not
+hardware-independent speed rankings.
 
 
 \subsection{Convergence Rate}
 
-% Compare the number of FEs required to reach a given quality,
-% or directly compare convergence curves.
+Figures~\ref{fig:bsd_convergence} and \ref{fig:chaos-convergence} plot median
+best-so-far fitness against consumed function evaluations, with interquartile
+ranges, for the common $K=12$ setting. Expressing the horizontal axis in FEs
+rather than generations is important because L-SHADE changes population size.
+The adaptive methods continue improving later in the budget and finish above
+the fixed-parameter baselines in these illustrative cases, consistent with
+the dataset-wide Friedman ranks. The curves are nevertheless for one image
+per dataset; they illustrate search dynamics and are not used as an additional
+significance test.
 
 
 \subsection{Impact of Increasing Dimensionality}
 
-% Important discussion:
-%
-% Search vector dimension == K.
-%
-% K=3 => 3-dimensional optimisation problem
-% K=12 => 12-dimensional optimisation problem
-%
-% Explain:
-% - search-space growth
-% - convergence difficulty
-% - variability
-% - population diversity
-% - premature convergence if observed
+The decision-vector dimension equals the number of thresholds, so the study
+moves from a three-dimensional problem at $K=3$ to a 12-dimensional problem
+at $K=12$. Even with ordering constraints, the number of feasible integer
+threshold sets is $\binom{254}{K}$; hence the search space grows rapidly while
+the FE budget remains fixed. Each objective evaluation also processes more
+class intervals, explaining part of the timing increase.
+
+Higher dimension therefore gives every method fewer effective opportunities
+to explore each coordinate interaction. Fixed $F$ and $CR$ can lose diversity
+or converge prematurely, while JADE and SHADE continually adapt these controls
+and use archives to introduce displaced solutions. L-SHADE adds an explicit
+exploration--exploitation schedule: a larger initial population samples the
+expanded space, after which linear reduction concentrates the remaining
+budget. Its best mean rank across all six dataset--objective analyses suggests
+that this schedule remained effective over the tested dimensions, though the
+experiment does not establish behaviour beyond $K=12$.
 
 
 
@@ -1619,11 +1578,6 @@ DE vs LADE      & -- & -- & -- \\
 \section{Discussion}
 \label{sec:discussion}
 
-% This is one of the most important report sections.
-%
-% Don't simply repeat Results.
-%
-% Suggested structure:
 
 
 \subsection{Comparison of Differential Evolution Variants}
@@ -1636,9 +1590,10 @@ archive. SHADE extends success-based adaptation with historical memories,
 whereas L-SHADE additionally reduces its population as the evaluation
 budget is consumed. LADE retains the fixed DE mutation and crossover
 parameters but relaxes selection using historical fitness benchmarks.
-The descriptive results show that no mechanism should be judged from a
-single objective or $K$ value; the pending paired analysis is required
-for overall claims.
+The results show that no mechanism should be judged from a single
+objective or $K$ value. Nevertheless, the fitness-rank analysis gives a
+consistent ordering across objectives and datasets: L-SHADE ranks first,
+followed by SHADE and JADE, while DE and LADE occupy the lower ranks.
 
 
 \subsection{Impact of Objective Function}
@@ -1665,11 +1620,11 @@ testing several $q$ values would be required to separate these effects.
 
 BSD500 provides varied natural-image intensity distributions, while the
 CHAOS subset contains grayscale abdominal MRI slices with different
-contrast and tissue-intensity structure. Both datasets support
-reconstruction and unsupervised separability analysis. However, the
-supplied CHAOS subset contains no anatomical masks, so the study cannot
-claim ground-truth organ-segmentation accuracy or compare datasets using
-Dice or Jaccard scores.
+contrast and tissue-intensity structure. Reconstruction metrics quantify
+how well the class-mean image preserves the source, whereas the revised
+CHAOS evaluation uses $\eta$ to quantify unsupervised intensity-class
+separation. The latter is a domain-relevant partition-quality measure, but
+it should not be interpreted as anatomical organ-recognition accuracy.
 
 
 \subsection{Algorithm Robustness}
@@ -1707,15 +1662,21 @@ Possible limitations include:
 This study evaluated five Differential Evolution algorithms for
 multilevel image thresholding using Otsu, Kapur, and Tsallis objective
 functions across six threshold dimensions.
-The completed BSD500 experiment shows that reconstruction quality
-generally improves as more thresholds are introduced and that objective
-choice materially affects the resulting segmentation metrics. The
-currently completed CHAOS results for DE, LADE and JADE show the same
-broad trend, with JADE giving the strongest Otsu and Kapur reconstruction
-results at high $K$ and DE/LADE remaining competitive for Tsallis.
-Because SHADE and L-SHADE are not yet complete on CHAOS, the final
-five-algorithm statistical ranking and any claim of significant
-superiority are deliberately deferred.
+Across both datasets, reconstruction quality generally improves as more
+thresholds are introduced, while objective choice materially affects
+the resulting metrics. On CHAOS at $K=12$, L-SHADE gives the highest
+mean Otsu PSNR, SHADE the highest mean Kapur PSNR, and LADE the highest
+mean Tsallis PSNR. The omnibus tests reject equivalent fitness ranks in
+all six dataset--objective comparisons, and L-SHADE has the best mean
+fitness rank throughout. These fitness results should not be conflated
+with reconstruction metrics, whose leading algorithm depends on the
+selected objective.
+For the revised CHAOS criterion, mean class separability increases with $K$
+for all three objectives and reaches 0.997539 for Otsu, 0.996838 for Kapur and
+0.985168 for Tsallis at $K=12$ when averaged across algorithms. Otsu is
+strongest at low threshold counts, and objective differences narrow as $K$
+increases. These values measure unsupervised intensity separation rather than
+anatomical recognition accuracy.
 
 
 % AUTHOR CONTRIBUTIONS
@@ -1724,17 +1685,16 @@ superiority are deliberately deferred.
 \section*{CRediT authorship contribution statement}
 
 \textbf{Aryan Mohanlall:}
-% Replace with actual responsibilities.
 Standard DE and Late Acceptance DE implementation.
 
 \textbf{Jaden Moodley:}
-% Insert actual contributions.
+Shared Experiment Infrastructure
 
-\textbf{Third Author:}
-% Insert actual contributions.
+\textbf{Moloko Manthata:}
+SHADE and LSHADE Implementation
 
-\textbf{Fourth Author:}
-% Insert actual contributions.
+\textbf{Zingisa Matwana:}
+JADE Implementation
 
 
 
@@ -1750,7 +1710,6 @@ influence the work reported in this paper.
 
 \section*{Acknowledgements}
 
-% Add acknowledgements only if appropriate.
 
 
 \section*{Data availability}
@@ -1759,13 +1718,12 @@ The source code, experimental configurations, and generated results
 used in this study are provided in the accompanying assignment
 submission repository.
 
-% Replace with repository URL if required.
 
 
 
 % REFERENCES
-
-
-\bibliography{sample}
+ 
+\bibliographystyle{elsarticle-harv}
+\bibliography{references}
 
 \end{document}
