@@ -17,10 +17,11 @@ python -m venv .venv
 ```sh
 python run_all.py --smoke
 python run_all.py
+python run_all.py --no-stats  # omit the final analysis if only sweeps are needed
 ```
 
 `run_all.py` is the master script: it runs both experiments, then the
-statistics and figures, and writes a manifest recording the git commit and
+statistics and figures, and writes a manifest recording the configuration and
 environment that produced the results.
 
 Work is sharded per cell and cached, so re-running skips anything already
@@ -47,6 +48,18 @@ runner includes all 10 BSD500 images and all 15 CHAOS slices, three objectives
 (Tsallis q=0.8), and K=3,5,7,9,11,12. It saves per-run thresholds, fitness,
 timing, PSNR, SSIM, uniformity, class separability, and convergence traces,
 plus summary tables. Add `--smoke --jobs 1` for a short pipeline check.
+
+When completed sweeps are stored in separate result roots, combine them without
+rerunning the optimisers by repeating `--source`, for example:
+
+```powershell
+.\.venv\Scripts\python.exe -m experiments.exp3_stats_scaling --results results/final_analysis --source results/exp1_standardDE --source results/exp1_late_acceptance_de --source results/exp1_jade --source results/exp1_shade_lshade_v2 --source results/exp2_standardDE --source results/exp2_lateAcceptanceDE --source results/exp2_jade --source results/exp2_shade_lshade_v2 --no-convergence
+```
+
+The analysis writes `analysis_manifest.json` with its input roots, dimensions,
+algorithms, objectives and accepted row count. Convergence plots require all
+curve files under one result root; the combined command above therefore retains
+the already-generated experiment-specific curves and uses `--no-convergence`.
 
 The optimisation operators and adaptation rules are retained from the original
 SHADE/L-SHADE implementations. Only the runner interface, evaluation accounting,
